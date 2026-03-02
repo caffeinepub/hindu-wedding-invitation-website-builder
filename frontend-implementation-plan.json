@@ -1,0 +1,46 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Fix HTTP 413 payload too large error on invite publish",
+  "requirements": [
+    {
+      "id": "REQ-20",
+      "summary": "Update frontend photo upload flow to use blob-storage component's chunked upload instead of embedding Base64 data inline, eliminating HTTP 413 errors when publishing invites with photos",
+      "acceptanceCriteria": [
+        "Selecting and uploading a bride, groom, or cover photo triggers chunked upload calls to the backend and finalizes the image before the user proceeds.",
+        "Gallery image uploads also use chunked upload, with per-image progress indication.",
+        "The publish payload sent via createInvite/updateInvite no longer contains raw Base64 image strings.",
+        "Publishing an invite with multiple photos no longer returns an HTTP 413 error.",
+        "Published /invite/:id pages still display all uploaded photos correctly after the chunked upload approach.",
+        "Upload progress UI is shown per image during chunk transmission."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/creator/StepPhotoUpload.tsx",
+          "operation": "modify",
+          "description": "Replace Base64 file conversion with ExternalBlob.fromBytes() from the blob-storage component. When a user selects a bride, groom, or cover photo, convert the File to Uint8Array, create an ExternalBlob instance with withUploadProgress() to track upload percentage, and store the ExternalBlob reference in form state instead of the Base64 string. Display a progress indicator during upload. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/creator/StepGalleryMusic.tsx",
+          "operation": "modify",
+          "description": "Replace Base64 file conversion with ExternalBlob.fromBytes() from the blob-storage component for gallery image uploads. For each selected gallery image, convert to Uint8Array, create an ExternalBlob with withUploadProgress(), track per-image upload progress, and store ExternalBlob references in the gallery array instead of Base64 strings. Display progress indicators for each uploading image. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CreateInvitePage.tsx",
+          "operation": "modify",
+          "description": "Update the payload assembly logic in the publish step to pass ExternalBlob instances directly in the InvitePayload for bridePhoto, groomPhoto, coverPhoto, and galleryImages fields. Remove any Base64 string serialization logic. The blob-storage component handles the chunked upload automatically when ExternalBlob instances are sent to the backend."
+        },
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Verify that the InvitePayload and InviteRecord type definitions already use ExternalBlob for image fields (bridePhoto, groomPhoto, coverPhoto, galleryImages). Update the types if they currently reference string or other types to ensure type safety when passing ExternalBlob instances."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Review the createInvite and updateInvite mutation hooks to ensure they correctly serialize ExternalBlob instances when calling the backend. The blob-storage component's ExternalBlob class handles chunked upload internally, so no manual chunking logic is needed. Ensure proper error handling for upload failures."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 7,
+  "summary": "Hindu Wedding Invitation Website Builder — a full-stack web app where users anonymously create cinematic, full-page Hindu wedding invitation websites. Features 8 richly styled templates (Royal Rajasthani, Temple Mandala, Dark Cosmic, Floral Marigold, South Indian Bronze, Minimal Sanskrit, Sunset Beach, 3D Floating Divine) with light/dark variants. Separate bride/groom photo uploads, gallery multi-upload with drag & drop, background music upload, live countdown timer, animated events timeline, RSVP form with confetti burst, shareable unique URLs, QR code generation, OG meta tags with cache-busting, WYSIWYG text editing, and full cinematic visual effects (floating frames, parallax, mandala reveals, drifting petals, glassmorphism).",
+  "architectural_notes": [
+    "Anonymous invite creation — no login required; invites accessed only via unique URL",
+    "Google Maps integration uses 'Open in Maps' link button (no embedded map widget)",
+    "OG image uses uploaded cover photo directly with cache-busting (?v=timestamp); no server-side compositing",
+    "Photos stored at original quality; responsive srcset and WebP fallback served without lossy downscaling; max 20MB/image",
+    "IC canister message size limit is ~2MB (2,097,152 bytes); Base64-encoded images sent inline in createInvite/updateInvite payloads exceed this limit and cause HTTP 413 errors. Images must be chunked, compressed before Base64 encoding, or stored/referenced externally rather than embedded inline in the canister call payload."
+  ],
+  "known_issues": [
+    "Publishing invite fails with HTTP 413 (payload too large: 2.7MB > 2MB IC limit) when Base64-encoded photos are included inline in the canister message"
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-build-a-multi-step-creator-flow-in-react-step-1-choose-template-8-cards-with-live-mini-preview-light-dark-toggle-per-card-step-2-enter-couple-details-bride-name-groom-name-wedding-date-time-tagline-step-3-upload-bride-photo-and-groom-photo-via-separate-upload-buttons-jpg-png-webp-max-20-mb-each-show-preview-preserve-original-generate-responsive-srcset-with-webp-fallback-step-4-add-events-name-date-time-venue-address-google-maps-url-optional-image-allow-multiple-events-step-5-upload-gallery-images-drag-drop-reorder-preview-no-auto-compression-and-optional-background-music-mp3-ogg-step-6-publish-display-the-shareable-url-and-qr-code",
+      "title": "Build a multi-step creator flow in React: Step 1 — Choose template (8 cards with live mini-preview, light/dark toggle per card). Step 2 — Enter couple details (bride name, groom name, wedding date/time, tagline). Step 3 — Upload bride photo and groom photo via separate upload buttons (JPG/PNG/WebP, max 20 MB each; show preview; preserve original; generate responsive srcset with WebP fallback). Step 4 — Add events (name, date/time, venue, address, Google Maps URL, optional image; allow multiple events). Step 5 — Upload gallery images (drag & drop, reorder, preview; no auto-compression) and optional background music (MP3/OGG). Step 6 — Publish: display the shareable URL and QR code.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-8-fully-styled-invitation-page-templates-as-react-components-royal-rajasthani-deep-crimson-gold-filigree-temple-mandala-intricate-mandala-svg-overlay-ochre-maroon-dark-cosmic-near-black-starfield-gold-constellation-lines-floral-marigold-marigold-orange-lush-floral-borders-south-indian-bronze-bronze-copper-tones-kolam-patterns-minimal-sanskrit-cream-ivory-refined-typography-subtle-om-watermark-sunset-beach-warm-sunset-gradient-wave-motifs-3d-floating-divine-layered-3d-depth-divine-purple-gold-each-template-has-a-light-and-a-dark-variant-toggled-via-a-prop-all-templates-are-full-bleed-cinematic-pages-no-boxed-card-layouts",
+      "title": "Implement 8 fully styled invitation page templates as React components: Royal Rajasthani (deep crimson, gold filigree), Temple Mandala (intricate mandala SVG overlay, ochre/maroon), Dark Cosmic (near-black, starfield, gold constellation lines), Floral Marigold (marigold orange, lush floral borders), South Indian Bronze (bronze/copper tones, Kolam patterns), Minimal Sanskrit (cream/ivory, refined typography, subtle Om watermark), Sunset Beach (warm sunset gradient, wave motifs), 3D Floating Divine (layered 3D depth, divine purple/gold). Each template has a light and a dark variant toggled via a prop. All templates are full-bleed cinematic pages — no boxed card layouts.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-cinematic-visual-effects-to-all-invitation-templates-a-floating-photo-frames-bride-and-groom-photos-in-decorative-frames-with-a-continuous-subtle-3d-bobbing-css-animation-b-mouse-tilt-hero-the-hero-section-tilts-slightly-on-mouse-pointer-move-using-a-perspective-transform-c-parallax-layers-background-patterns-and-decoration-layers-scroll-at-different-rates-d-animated-mandala-reveal-a-mandala-svg-that-rotates-in-and-expands-on-page-load-e-gold-filigree-svg-masks-over-photo-frames-and-section-dividers-f-drifting-petals-incense-particle-layer-css-canvas-particles-marigold-petals-or-incense-smoke-dots-drifting-across-the-viewport-g-glassmorphism-info-panels-for-event-cards-and-rsvp-section-all-effects-must-be-disabled-or-reduced-when-the-reduce-motion-toggle-is-on",
+      "title": "Add cinematic visual effects to all invitation templates: (a) Floating photo frames — bride and groom photos in decorative frames with a continuous subtle 3D bobbing CSS animation. (b) Mouse-tilt hero — the hero section tilts slightly on mouse/pointer move using a perspective transform. (c) Parallax layers — background patterns and decoration layers scroll at different rates. (d) Animated mandala reveal — a mandala SVG that rotates in and expands on page load. (e) Gold filigree SVG masks over photo frames and section dividers. (f) Drifting petals/incense particle layer — CSS/canvas particles (marigold petals or incense smoke dots) drifting across the viewport. (g) Glassmorphism info panels for event cards and RSVP section. All effects must be disabled or reduced when the reduce-motion toggle is on.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-live-countdown-timer-in-the-hero-section-of-every-invitation-template-display-days-hours-minutes-and-seconds-as-animated-flip-card-or-glowing-numeric-counters-when-the-countdown-reaches-zero-replace-the-timer-with-a-glowing-the-celebration-begins-message-the-timer-updates-every-second-via-setinterval",
+      "title": "Implement a live countdown timer in the hero section of every invitation template. Display days, hours, minutes, and seconds as animated flip-card or glowing numeric counters. When the countdown reaches zero, replace the timer with a glowing 'The celebration begins!' message. The timer updates every second via setInterval.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-an-events-timeline-section-in-the-invitation-page-render-each-event-as-an-animated-timeline-card-alternating-left-right-on-desktop-stacked-on-mobile-with-event-name-date-time-venue-name-address-an-open-in-maps-button-that-opens-the-pasted-google-maps-url-in-a-new-tab-and-an-optional-event-image-timeline-cards-animate-in-on-scroll-using-intersectionobserver-disabled-when-reduce-motion-is-on-use-glassmorphism-card-styling",
+      "title": "Build an events timeline section in the invitation page. Render each event as an animated timeline card (alternating left/right on desktop, stacked on mobile) with: event name, date/time, venue name, address, an 'Open in Maps' button that opens the pasted Google Maps URL in a new tab, and an optional event image. Timeline cards animate in on scroll using IntersectionObserver (disabled when reduce-motion is on). Use glassmorphism card styling.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-an-rsvp-form-section-with-fields-full-name-phone-email-attending-yes-no-radio-guest-count-number-input-meal-preference-dropdown-vegetarian-non-vegetarian-vegan-no-preference-and-a-message-textarea-on-successful-submission-trigger-a-full-screen-confetti-flower-petal-burst-animation-and-display-a-customizable-thank-you-message-editable-by-the-invite-creator-form-submits-to-the-backend-submitrsvp-endpoint-disable-the-form-after-successful-submission-to-prevent-duplicates",
+      "title": "Build an RSVP form section with fields: full name, phone, email, attending (Yes/No radio), guest count (number input), meal preference (dropdown: Vegetarian, Non-Vegetarian, Vegan, No Preference), and a message textarea. On successful submission, trigger a full-screen confetti/flower petal burst animation and display a customizable thank-you message (editable by the invite creator). Form submits to the backend submitRSVP endpoint. Disable the form after successful submission to prevent duplicates.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-shareable-invite-urls-and-qr-code-generation-each-invite-is-accessible-at-a-route-like-invite-id-on-the-publish-step-of-the-creator-flow-display-the-full-shareable-url-and-generate-a-qr-code-using-a-client-side-qr-library-e-g-qrcode-react-that-encodes-the-url-provide-a-copy-to-clipboard-button-for-the-url",
+      "title": "Implement shareable invite URLs and QR code generation. Each invite is accessible at a route like /invite/:id. On the publish step of the creator flow, display the full shareable URL and generate a QR code (using a client-side QR library, e.g. qrcode.react) that encodes the URL. Provide a copy-to-clipboard button for the URL.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-og-meta-tags-on-each-invitation-page-for-social-sharing-inject-into-the-document-head-og-title-couple-names-wedding-date-og-description-tagline-or-event-summary-og-image-cover-photo-url-with-v-timestamp-cache-busting-parameter-og-image-width-1200-og-image-height-630-twitter-card-summary-large-image-use-a-default-fallback-image-at-assets-generated-og-fallback-dim-1200x630-png-when-no-cover-photo-is-uploaded-use-react-helmet-or-equivalent-for-dynamic-head-injection",
+      "title": "Implement OG meta tags on each invitation page for social sharing. Inject into the document head: og:title (couple names + wedding date), og:description (tagline or event summary), og:image (cover photo URL with ?v=timestamp cache-busting parameter), og:image:width (1200), og:image:height (630), twitter:card (summary_large_image). Use a default fallback image at /assets/generated/og-fallback.dim_1200x630.png when no cover photo is uploaded. Use React Helmet or equivalent for dynamic head injection.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-background-music-playback-in-the-invitation-page-display-a-visible-floating-play-pause-toggle-button-bottom-right-corner-music-only-starts-after-the-first-user-interaction-click-tap-anywhere-on-the-page-loop-the-audio-accept-mp3-and-ogg-formats-respect-the-reduce-motion-toggle-do-not-auto-animate-the-music-button-when-reduce-motion-is-on",
+      "title": "Implement background music playback in the invitation page. Display a visible floating play/pause toggle button (bottom-right corner). Music only starts after the first user interaction (click/tap anywhere on the page). Loop the audio. Accept MP3 and OGG formats. Respect the reduce-motion toggle (do not auto-animate the music button when reduce-motion is on).",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-wysiwyg-inline-text-editing-for-invitation-pages-allow-the-creator-to-click-any-text-element-couple-names-tagline-section-headings-body-text-and-edit-it-in-place-provide-a-floating-toolbar-with-font-family-selector-curated-hindu-appropriate-pairings-cormorant-garamond-eb-garamond-playfair-display-lato-noto-serif-devanagari-open-sans-cinzel-raleway-font-size-bold-italic-and-color-picker-also-provide-color-presets-gilded-saffron-f4a832-royal-marigold-e8731a-temple-red-c0392b-deep-indigo-3b1f6e-ivory-faf3e0-allow-toggling-entire-sections-couple-story-gallery-travel-accommodation-dress-code-blessings-on-off",
+      "title": "Implement WYSIWYG inline text editing for invitation pages. Allow the creator to click any text element (couple names, tagline, section headings, body text) and edit it in place. Provide a floating toolbar with font family selector (curated Hindu-appropriate pairings: Cormorant Garamond + EB Garamond, Playfair Display + Lato, Noto Serif Devanagari + Open Sans, Cinzel + Raleway), font size, bold/italic, and color picker. Also provide color presets: Gilded Saffron (#F4A832), Royal Marigold (#E8731A), Temple Red (#C0392B), Deep Indigo (#3B1F6E), Ivory (#FAF3E0). Allow toggling entire sections (couple story, gallery, travel/accommodation, dress code, blessings) on/off.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-live-preview-panel-in-the-creator-editor-flow-show-a-toggleable-mobile-390px-wide-and-desktop-1280px-wide-preview-of-the-invitation-rendered-in-an-iframe-or-scaled-container-include-a-reduce-motion-accessibility-toggle-that-when-enabled-disables-all-css-animations-and-transitions-on-the-preview-and-the-published-page",
+      "title": "Add a live preview panel in the creator/editor flow. Show a toggleable mobile (390px wide) and desktop (1280px wide) preview of the invitation rendered in an iframe or scaled container. Include a reduce-motion accessibility toggle that, when enabled, disables all CSS animations and transitions on the preview and the published page.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-home-landing-page-for-the-app-show-a-hero-section-explaining-the-product-a-gallery-of-the-8-sample-invites-as-clickable-cards-and-a-prominent-create-your-invitation-cta-button-that-starts-the-creator-flow-include-a-brief-how-it-works-section-3-steps-choose-template-customize-share",
+      "title": "Build a home/landing page for the app. Show a hero section explaining the product, a gallery of the 8 sample invites as clickable cards, and a prominent 'Create Your Invitation' CTA button that starts the creator flow. Include a brief how-it-works section (3 steps: Choose template → Customize → Share).",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-rich-cinematic-visual-theme-across-the-entire-app-creator-flow-home-page-and-invitation-pages-use-deep-jewel-tones-saffron-marigold-crimson-gold-ivory-with-ornate-hindu-inspired-decorative-motifs-as-svg-accents-typography-should-use-cormorant-garamond-for-headings-and-eb-garamond-for-body-the-creator-ui-should-feel-premium-and-editorial-dark-deep-maroon-ivory-surfaces-with-gold-accents-subtle-grain-texture-and-animated-section-transitions-enforce-the-theme-consistently-across-all-pages",
+      "title": "Apply a rich cinematic visual theme across the entire app (creator flow, home page, and invitation pages). Use deep jewel tones (saffron, marigold, crimson, gold, ivory) with ornate Hindu-inspired decorative motifs as SVG accents. Typography should use Cormorant Garamond for headings and EB Garamond for body. The creator UI should feel premium and editorial — dark deep-maroon/ivory surfaces with gold accents, subtle grain texture, and animated section transitions. Enforce the theme consistently across all pages.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-bride-photo-groom-photo-and-gallery-images-not-rendering-in-the-published-invitation-page-photos-are-uploaded-and-stored-as-object-urls-blob-urls-during-the-creator-flow-but-these-object-urls-are-ephemeral-they-become-invalid-after-the-session-ends-or-the-page-is-refreshed-the-fix-must-persist-photo-data-by-converting-uploaded-images-to-base64-data-urls-before-storing-them-in-the-backend-invite-record-so-that-photos-are-retrievable-and-renderable-on-the-published-invite-id-page-across-sessions-and-devices",
+      "title": "Fix bride photo, groom photo, and gallery images not rendering in the published invitation page. Photos are uploaded and stored as object URLs (blob: URLs) during the creator flow but these object URLs are ephemeral — they become invalid after the session ends or the page is refreshed. The fix must persist photo data by converting uploaded images to Base64 data URLs before storing them in the backend invite record, so that photos are retrievable and renderable on the published /invite/:id page across sessions and devices.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-frontend-photo-upload-steps-stepphotoupload-tsx-for-bride-groom-cover-photos-and-stepgallerymusic-tsx-for-gallery-images-to-convert-uploaded-files-to-base64-data-urls-using-filereader-before-storing-them-in-the-creator-form-state-replace-all-object-url-url-createobjecturl-usage-for-photos-that-need-to-be-persisted-with-base64-data-url-conversion-so-the-form-state-submitted-to-the-backend-contains-persistent-base64-strings-instead-of-ephemeral-blob-urls",
+      "title": "Update the frontend photo upload steps (StepPhotoUpload.tsx for bride/groom/cover photos and StepGalleryMusic.tsx for gallery images) to convert uploaded files to Base64 data URLs using FileReader before storing them in the creator form state. Replace all object URL (URL.createObjectURL) usage for photos that need to be persisted with Base64 data URL conversion, so the form state submitted to the backend contains persistent Base64 strings instead of ephemeral blob URLs.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-frontend-photo-upload-flow-to-use-the-new-chunked-upload-endpoints-instead-of-embedding-base64-data-inline-in-the-publish-payload-in-stepphotoupload-tsx-and-stepgallerymusic-tsx-after-a-user-selects-an-image-file-split-the-base64-data-url-into-chunks-of-at-most-1mb-each-and-call-uploadimagechunk-sequentially-for-each-chunk-then-call-finalizeimage-to-commit-the-image-store-only-a-reference-token-or-the-fieldkey-not-the-full-base64-string-in-the-creator-form-state-when-the-createinvitepage-assembles-the-final-invitepayload-for-createinvite-updateinvite-omit-raw-image-data-images-are-already-stored-via-the-chunked-upload-flow-show-per-image-upload-progress-during-chunked-upload",
+      "title": "Update the frontend photo upload flow to use the new chunked upload endpoints instead of embedding Base64 data inline in the publish payload. In StepPhotoUpload.tsx and StepGalleryMusic.tsx, after a user selects an image file, split the Base64 data URL into chunks of at most 1MB each and call uploadImageChunk sequentially for each chunk, then call finalizeImage to commit the image. Store only a reference token or the fieldKey (not the full Base64 string) in the creator form state. When the CreateInvitePage assembles the final InvitePayload for createInvite/updateInvite, omit raw image data — images are already stored via the chunked upload flow. Show per-image upload progress during chunked upload.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "8 richly styled Hindu templates with light/dark variants",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Separate Bride and Groom photo upload buttons with original quality preservation and responsive srcset",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Gallery multi-upload with drag & drop, reorder, and preview; no auto-compression of originals",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Background music upload (MP3/OGG) with play/pause toggle; autoplay only after user interaction",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Events section with animated timeline, multiple events (name, date/time, venue, address, Maps link button, optional image)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "RSVP form (name, phone, email, attending, guest count, meal preference, message) with confetti/petal burst success animation and customizable thank-you text",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Anonymous invite creation; shareable unique URL per invite and QR code generation",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "OG meta tags: og:image (cover photo, 1200x630, cache-busted), og:title, og:description, twitter:card summary_large_image, fallback image if no cover uploaded",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Live countdown timer (flip or glowing numeric) in hero; shows 'The celebration begins!' at zero",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Cinematic visual effects: floating photo frames, 3D bobbing, mouse-tilt hero, parallax layers, animated mandala reveals, gold filigree masks, drifting petals/incense particles, glassmorphism panels",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "WYSIWYG text editing (fonts, sizes, color), toggleable sections, curated font pairings and color presets",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Live preview (mobile + desktop), reduce-motion accessibility toggle, mobile-first responsive design",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Creator flow: new invite → choose template → upload bride & groom → add events → add gallery/music → publish URL",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "8 seeded sample invites (one per template) with placeholder images/music",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Create a Motoko backend actor that stores invite records anonymously. Each invite has a unique ID (nanoid-style), template ID, couple names, wedding date, cover image URL, bride photo URL, groom photo URL, gallery image URLs, background music URL, events list, RSVP responses, custom text fields, active sections config, theme variant (light/dark), and a createdAt timestamp. Expose endpoints: createInvite, getInvite(id), updateInvite(id, payload), submitRSVP(id, rsvpData), listSampleInvites. No authentication required.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Seed 8 sample invite records (one per template) in the backend on first deploy: Royal Rajasthani, Temple Mandala, Dark Cosmic, Floral Marigold, South Indian Bronze, Minimal Sanskrit, Sunset Beach, 3D Floating Divine. Each sample uses placeholder couple names, a future wedding date, placeholder image URLs pointing to /assets/generated/ files, and lorem-style event/venue data.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Update the Motoko backend to accept and store Base64-encoded photo strings (bride photo, groom photo, cover photo, gallery image URLs array) in invite records. Ensure the bridePhoto, groomPhoto, coverPhoto, and galleryImages fields in the InviteRecord type and the createInvite/updateInvite payload types can hold full Base64 data URL strings (data:image/...;base64,...) without truncation.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Implement a chunked image storage strategy in the Motoko backend to work around the 2MB IC ingress message limit. Instead of accepting full Base64 image data inline in createInvite/updateInvite calls, add a dedicated uploadImageChunk(inviteId, fieldKey, chunkIndex, totalChunks, chunkData) endpoint that accepts image data in chunks (each chunk ≤ 1MB). Add a finalizeImage(inviteId, fieldKey) endpoint that assembles the chunks and stores the complete image against the invite record. The invite record's image fields (bridePhoto, groomPhoto, coverPhoto, galleryImages array entries) should store the assembled data internally after finalization. createInvite and updateInvite payloads must no longer carry raw image data — image fields in those payloads should accept only an empty/placeholder value or be omitted entirely.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Hindu Wedding Invitation Website Builder",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

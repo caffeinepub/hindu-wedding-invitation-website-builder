@@ -1,0 +1,28 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-update-the-frontend-photo-upload-flow-to-use-the-new-chunked-upload-endpoints-instead-of-embedding-base64-data-inline-in-the-publish-payload-in-stepphotoupload-tsx-and-stepgallerymusic-tsx-after-a-user-selects-an-image-file-split-the-base64-data-url-into-chunks-of-at-most-1mb-each-and-call-uploadimagechunk-sequentially-for-each-chunk-then-call-finalizeimage-to-commit-the-image-store-only-a-reference-token-or-the-fieldkey-not-the-full-base64-string-in-the-creator-form-state-when-the-createinvitepage-assembles-the-final-invitepayload-for-createinvite-updateinvite-omit-raw-image-data-images-are-already-stored-via-the-chunked-upload-flow-show-per-image-upload-progress-during-chunked-upload",
+      "featureTitle": "Update the frontend photo upload flow to use the new chunked upload endpoints instead of embedding Base64 data inline in the publish payload. In StepPhotoUpload.tsx and StepGalleryMusic.tsx, after a user selects an image file, split the Base64 data URL into chunks of at most 1MB each and call uploadImageChunk sequentially for each chunk, then call finalizeImage to commit the image. Store only a reference token or the fieldKey (not the full Base64 string) in the creator form state. When the CreateInvitePage assembles the final InvitePayload for createInvite/updateInvite, omit raw image data — images are already stored via the chunked upload flow. Show per-image upload progress during chunked upload.",
+      "files": [
+        "frontend/src/components/creator/StepGalleryMusic.tsx",
+        "frontend/src/components/creator/StepPhotoUpload.tsx",
+        "frontend/src/pages/CreateInvitePage.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-20"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
