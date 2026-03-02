@@ -1,131 +1,106 @@
 import { useState } from 'react';
-import { Copy, Check, Share2 } from 'lucide-react';
-import { SiWhatsapp } from 'react-icons/si';
-import { Button } from '@/components/ui/button';
+import { useNavigate } from '@tanstack/react-router';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useInviteCreator } from '../../hooks/useQueries';
+import { Share2, Copy, Check, MessageCircle, QrCode, Users } from 'lucide-react';
 
 interface ShareSectionProps {
-  url: string;
-  accentColor?: string;
+  inviteId?: string;
   coupleNames?: string;
   weddingDate?: string;
 }
 
-function generateQRDataURL(text: string, size: number): string {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&bgcolor=ffffff&color=1a0a00&margin=10`;
-}
-
-function formatWeddingDate(dateStr?: string): string {
-  if (!dateStr) return '';
-  try {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
-export default function ShareSection({
-  url,
-  accentColor = '#D4AF37',
-  coupleNames,
-  weddingDate,
-}: ShareSectionProps) {
+export default function ShareSection({ inviteId, coupleNames, weddingDate }: ShareSectionProps) {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const qrUrl = generateQRDataURL(url, 180);
+  const [showQR, setShowQR] = useState(false);
+
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+  const currentPrincipal = identity?.getPrincipal().toString();
+
+  const { data: creatorPrincipal } = useInviteCreator(inviteId ?? '');
+  const isCreator = isAuthenticated && creatorPrincipal !== null && creatorPrincipal === currentPrincipal;
+
+  const inviteUrl = inviteId
+    ? `${window.location.origin}/invite/${inviteId}`
+    : window.location.href;
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      try {
-        const el = document.createElement('textarea');
-        el.value = url;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {}
-    }
+    await navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleWhatsAppShare = () => {
-    const formattedDate = formatWeddingDate(weddingDate);
-    const names = coupleNames || 'The Couple';
-    let message = `🌸 You're invited to the wedding of *${names}*!`;
-    if (formattedDate) {
-      message += `\n📅 ${formattedDate}`;
-    }
-    message += `\n\n✨ View the invitation:\n${url}`;
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  const handleWhatsApp = () => {
+    const text = coupleNames && weddingDate
+      ? `You're invited to the wedding of ${coupleNames} on ${weddingDate}! 🌸\n${inviteUrl}`
+      : `You're invited! 🌸\n${inviteUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(inviteUrl)}`;
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* QR Code */}
-      <div
-        className="p-4 rounded-2xl"
-        style={{ background: '#fff', border: `3px solid ${accentColor}` }}
-      >
-        <img
-          src={qrUrl}
-          alt="QR Code"
-          width={180}
-          height={180}
-          className="block"
-          style={{ imageRendering: 'pixelated' }}
-        />
+    <div className="flex flex-col items-center gap-4 py-6">
+      <div className="flex items-center gap-2 text-gold/70 mb-2">
+        <Share2 className="w-4 h-4" />
+        <span className="font-raleway text-sm tracking-widest uppercase">Share Invitation</span>
       </div>
 
-      {/* URL Copy Row */}
-      <div className="w-full max-w-md">
-        <div
-          className="flex items-center gap-2 rounded-xl p-3"
-          style={{ background: accentColor + '11', border: `1px solid ${accentColor}44` }}
-        >
-          <Share2 size={16} style={{ color: accentColor, flexShrink: 0 }} />
-          <span className="flex-1 text-sm font-garamond truncate opacity-80">{url}</span>
-          <Button
-            size="sm"
-            onClick={handleCopy}
-            className="shrink-0 rounded-lg font-garamond"
-            style={{
-              background: copied ? '#22c55e' : accentColor,
-              color: '#1a0a00',
-              border: 'none',
-            }}
-          >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            <span className="ml-1">{copied ? 'Copied!' : 'Copy'}</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* WhatsApp Share Button */}
-      <div className="w-full max-w-md">
+      <div className="flex flex-wrap gap-3 justify-center">
+        {/* Copy Link */}
         <button
-          onClick={handleWhatsAppShare}
-          className="w-full flex items-center justify-center gap-3 rounded-xl py-3 px-5 font-cormorant font-semibold text-base transition-all duration-200 hover:opacity-90 active:scale-95"
-          style={{
-            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-            color: '#ffffff',
-            boxShadow: '0 4px 16px 0 #25D36644',
-            border: '1px solid #25D36688',
-            letterSpacing: '0.04em',
-          }}
+          onClick={handleCopy}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold/30 text-gold/80 hover:bg-gold/10 hover:border-gold/50 hover:text-gold transition-all font-raleway text-sm tracking-wide"
         >
-          <SiWhatsapp size={20} />
-          <span>Share on WhatsApp</span>
+          {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          {copied ? 'Copied!' : 'Copy Link'}
         </button>
+
+        {/* WhatsApp */}
+        <button
+          onClick={handleWhatsApp}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-green-500/30 text-green-400/80 hover:bg-green-500/10 hover:border-green-500/50 hover:text-green-400 transition-all font-raleway text-sm tracking-wide"
+        >
+          <MessageCircle className="w-4 h-4" />
+          WhatsApp
+        </button>
+
+        {/* QR Code */}
+        <button
+          onClick={() => setShowQR(!showQR)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold/30 text-gold/80 hover:bg-gold/10 hover:border-gold/50 hover:text-gold transition-all font-raleway text-sm tracking-wide"
+        >
+          <QrCode className="w-4 h-4" />
+          QR Code
+        </button>
+
+        {/* View RSVP Responses — only for authenticated creator */}
+        {isCreator && inviteId && (
+          <button
+            onClick={() => navigate({ to: `/invite/${inviteId}/responses` })}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-gold/20 to-saffron/20 border border-gold/40 text-gold hover:from-gold/30 hover:to-saffron/30 hover:border-gold/60 transition-all font-raleway text-sm tracking-wide font-medium"
+          >
+            <Users className="w-4 h-4" />
+            View RSVP Responses
+          </button>
+        )}
       </div>
+
+      {/* QR Code Display */}
+      {showQR && (
+        <div className="mt-2 p-4 rounded-xl border border-gold/20 bg-white/5 backdrop-blur-sm">
+          <img
+            src={qrUrl}
+            alt="QR Code"
+            className="w-40 h-40 rounded-lg"
+          />
+          <p className="font-raleway text-xs text-foreground/40 text-center mt-2 tracking-wide">
+            Scan to open invitation
+          </p>
+        </div>
+      )}
     </div>
   );
 }

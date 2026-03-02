@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useGetInvite } from '../hooks/useQueries';
 import InviteMetaTags from '../components/invitation/InviteMetaTags';
@@ -7,8 +7,8 @@ import { TemplateComponents } from '../lib/templateRegistry';
 import type { InviteRecord } from '../backend';
 
 function TemplateRenderer({ invite }: { invite: InviteRecord }) {
-  const templateId = invite.templateId as keyof typeof TemplateComponents;
-  const TemplateComponent = TemplateComponents[templateId] || TemplateComponents['royal-rajasthani'];
+  const loader = TemplateComponents[invite.templateId] ?? TemplateComponents['royal-rajasthani'];
+  const TemplateComponent = lazy(loader);
   const variant = (invite.themeVariant === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
 
   return (
@@ -36,7 +36,6 @@ function InviteLoadingSkeleton() {
 
 export default function InvitePage() {
   const { id } = useParams({ from: '/invite/$id' });
-  // isLoading is true only on the very first fetch; subsequent visits use cached data (staleTime=60s)
   const { data: invite, isLoading, error } = useGetInvite(id);
 
   if (isLoading) {

@@ -1,19 +1,24 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 11,
-  "summary": "Hindu Wedding Invitation Website Builder — a full-stack web app where users anonymously create cinematic, full-page Hindu wedding invitation websites. Features 8 richly styled templates (Royal Rajasthani, Temple Mandala, Dark Cosmic, Floral Marigold, South Indian Bronze, Minimal Sanskrit, Sunset Beach, 3D Floating Divine) with light/dark variants. Separate bride/groom photo uploads, gallery multi-upload with drag & drop, background music upload, live countdown timer, animated events timeline, RSVP form with confetti burst, shareable unique URLs, QR code generation, OG meta tags with cache-busting, WYSIWYG text editing, and full cinematic visual effects (floating frames, parallax, mandala reveals, drifting petals, glassmorphism).",
+  "projectStateVersion": 27,
+  "summary": "Hindu Wedding Invitation Website Builder — a full-stack web app where authenticated users (via Internet Identity) create cinematic, full-page Hindu wedding invitation websites. Features 12 richly styled templates (8 original + 4 new premium: Mughal Garden, Vedic Fire, Royal Navy Zari, Lotus Bloom) with light/dark variants. Login-based system: only authenticated creators can create/edit invites and view RSVP responses. Home page transforms into a personal 'My Invitations' dashboard when logged in. 'View RSVP Responses' button hidden from guests — only visible to the logged-in creator on their own invite page. Anonymous invite creation disabled; old anonymous invites no longer editable. Email field in RSVP form is optional. Separate bride/groom photo uploads, gallery multi-upload with drag & drop, background music upload, live countdown timer, animated events timeline, RSVP form with confetti burst, shareable unique URLs, QR code generation, OG meta tags with cache-busting, WYSIWYG text editing, and full cinematic visual effects (floating frames, parallax, mandala reveals, drifting petals, glassmorphism).",
   "architectural_notes": [
-    "Anonymous invite creation — no login required; invites accessed only via unique URL",
     "Google Maps integration uses 'Open in Maps' link button (no embedded map widget)",
     "OG image uses uploaded cover photo directly with cache-busting (?v=timestamp); no server-side compositing",
     "Photos stored at original quality; responsive srcset and WebP fallback served without lossy downscaling; max 20MB/image",
-    "IC canister message size limit is ~2MB (2,097,152 bytes); Base64-encoded images sent inline in createInvite/updateInvite payloads exceed this limit and cause HTTP 413 errors. Images must be chunked, compressed before Base64 encoding, or stored/referenced externally rather than embedded inline in the canister call payload."
+    "IC canister message size limit is ~2MB (2,097,152 bytes); Base64-encoded images sent inline in createInvite/updateInvite payloads exceed this limit and cause HTTP 413 errors. Images must be chunked, compressed before Base64 encoding, or stored/referenced externally rather than embedded inline in the canister call payload.",
+    "Authentication uses Internet Identity; invite creation, editing, and RSVP response viewing are gated behind login. Anonymous callers cannot create or modify invites.",
+    "Each invite record is associated with the creator's Internet Identity principal; only that principal can edit the invite or view its RSVP responses."
   ],
   "known_issues": [
     "Publishing invite fails with HTTP 413 (payload too large: 2.7MB > 2MB IC limit) when Base64-encoded photos are included inline in the canister message",
     "Background music does not autoplay when invitation page is opened",
     "Publishing an invite and opening the invitation page are both slow (performance issue)",
-    "Bride/groom photo frame overlaps/shows in the middle of the photo instead of acting as a border around it"
+    "Bride/groom photo frame overlaps/shows in the middle of the photo instead of acting as a border around it",
+    "Publish button not working — invite is not being saved; createInvite/updateInvite flow not completing and shareable URL not returned",
+    "RSVP section text color blends into background, making form content unreadable",
+    "Edit flow does not pre-fill saved invite data — all fields are empty when editing an existing invite from the dashboard",
+    "'Actor not available' error shown when clicking Publish Invitation — actor client not yet initialized at the time of the canister call"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -192,6 +197,318 @@
         "REQ-26"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-the-publish-button-in-steppublish-tsx-so-that-the-createinvite-updateinvite-backend-call-completes-successfully-and-persists-the-invite-record-debug-the-full-publish-pipeline-in-createinvitepage-tsx-ensure-the-invitepayload-is-assembled-correctly-no-raw-base64-image-data-inline-images-are-already-stored-via-the-chunked-upload-flow-the-actor-call-is-awaited-and-errors-are-caught-and-surfaced-to-the-user-and-on-success-the-invite-id-and-shareable-url-are-returned-and-displayed-in-the-publish-step-the-publish-button-must-not-silently-fail-or-hang",
+      "title": "Fix the publish button in StepPublish.tsx so that the createInvite/updateInvite backend call completes successfully and persists the invite record. Debug the full publish pipeline in CreateInvitePage.tsx: ensure the InvitePayload is assembled correctly (no raw Base64 image data inline — images are already stored via the chunked upload flow), the actor call is awaited and errors are caught and surfaced to the user, and on success the invite ID and shareable URL are returned and displayed in the publish step. The publish button must not silently fail or hang.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-route-invite-id-responses-in-the-frontend-router-app-tsx-that-renders-a-new-rsvpresponsespage-component-the-route-must-coexist-with-the-existing-invite-id-route-without-affecting-it",
+      "title": "Add a new route /invite/:id/responses in the frontend router (App.tsx) that renders a new RSVPResponsesPage component. The route must coexist with the existing /invite/:id route without affecting it.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-new-frontend-page-component-rsvpresponsespage-tsx-at-frontend-src-pages-rsvpresponsespage-tsx-it-fetches-the-invite-details-to-display-couple-names-and-wedding-date-in-the-heading-and-all-rsvp-responses-for-the-invite-id-from-the-url-param-using-react-query-display-a-summary-bar-at-the-top-showing-total-responses-total-attending-yes-total-not-attending-no-and-total-guest-count-below-the-summary-render-a-full-responsive-table-listing-each-respondent-with-columns-name-attending-guests-meal-preference-message-and-submitted-at-on-mobile-collapse-the-table-to-stacked-cards-show-a-loading-skeleton-while-data-is-fetching-and-an-empty-state-message-no-responses-yet-check-back-soon-if-the-responses-array-is-empty",
+      "title": "Create a new frontend page component RSVPResponsesPage.tsx at frontend/src/pages/RSVPResponsesPage.tsx. It fetches the invite details (to display couple names and wedding date in the heading) and all RSVP responses for the invite ID from the URL param using React Query. Display a summary bar at the top showing: total responses, total attending (Yes), total not attending (No), and total guest count. Below the summary, render a full responsive table listing each respondent with columns: Name, Attending, Guests, Meal Preference, Message, and Submitted At. On mobile, collapse the table to stacked cards. Show a loading skeleton while data is fetching and an empty-state message ('No responses yet — check back soon!') if the responses array is empty.",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-usersvpresponses-react-query-hook-in-frontend-src-hooks-usequeries-ts-that-calls-the-getrsvpresponses-inviteid-backend-endpoint-and-returns-the-list-of-rsvp-records-set-staletime-to-at-least-30-seconds",
+      "title": "Add a useRSVPResponses React Query hook in frontend/src/hooks/useQueries.ts that calls the getRSVPResponses(inviteId) backend endpoint and returns the list of RSVP records. Set staleTime to at least 30 seconds.",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-published-invitation-page-invitepage-tsx-or-within-basetemplate-tsx-sharesection-tsx-add-a-visible-view-rsvp-responses-link-button-that-navigates-to-invite-id-responses-style-the-button-to-match-the-app-s-premium-theme-gold-saffron-accent-cormorant-garamond-typography-place-it-near-the-existing-share-qr-section-at-the-bottom-of-the-invitation-page",
+      "title": "On the published invitation page (InvitePage.tsx or within BaseTemplate.tsx / ShareSection.tsx), add a visible 'View RSVP Responses' link/button that navigates to /invite/:id/responses. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond typography). Place it near the existing share/QR section at the bottom of the invitation page.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-getmyinvites-react-query-hook-in-frontend-src-hooks-usequeries-ts-that-calls-the-backend-getmyinvites-endpoint-using-the-authenticated-actor-the-query-should-only-run-when-the-user-is-authenticated-set-staletime-to-at-least-30-seconds",
+      "title": "Add a `getMyInvites` React Query hook in `frontend/src/hooks/useQueries.ts` that calls the backend `getMyInvites()` endpoint using the authenticated actor. The query should only run when the user is authenticated. Set `staleTime` to at least 30 seconds.",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-transform-frontend-src-pages-landingpage-tsx-so-that-when-the-user-is-logged-in-via-internet-identity-the-page-renders-a-my-invitations-personal-dashboard-instead-of-the-marketing-landing-page-the-dashboard-must-a-show-a-greeting-with-the-user-s-principal-abbreviated-and-a-logout-button-b-list-all-of-the-user-s-invites-fetched-via-the-usemyinvites-hook-each-displayed-as-a-card-with-the-couple-names-wedding-date-template-name-and-two-action-buttons-edit-navigates-to-the-creator-flow-pre-filled-with-that-invite-s-data-and-view-rsvp-responses-navigates-to-invite-id-responses-c-include-a-prominent-create-new-invitation-cta-button-d-show-a-loading-skeleton-while-invites-are-loading-and-an-empty-state-message-no-invitations-yet-create-your-first-one-when-the-list-is-empty-when-the-user-is-logged-out-the-page-continues-to-show-the-existing-marketing-landing-page-with-the-create-your-invitation-cta-but-that-cta-must-now-trigger-internet-identity-login-before-navigating-to-the-creator-flow",
+      "title": "Transform `frontend/src/pages/LandingPage.tsx` so that when the user is logged in (via Internet Identity), the page renders a 'My Invitations' personal dashboard instead of the marketing landing page. The dashboard must: (a) show a greeting with the user's principal (abbreviated) and a logout button, (b) list all of the user's invites fetched via the `useMyInvites` hook, each displayed as a card with the couple names, wedding date, template name, and two action buttons — 'Edit' (navigates to the creator flow pre-filled with that invite's data) and 'View RSVP Responses' (navigates to `/invite/:id/responses`), (c) include a prominent 'Create New Invitation' CTA button, (d) show a loading skeleton while invites are loading and an empty-state message ('No invitations yet — create your first one!') when the list is empty. When the user is logged out, the page continues to show the existing marketing landing page with the 'Create Your Invitation' CTA — but that CTA must now trigger Internet Identity login before navigating to the creator flow.",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-gate-the-creator-flow-in-frontend-src-pages-createinvitepage-tsx-so-that-an-unauthenticated-user-is-redirected-to-the-landing-page-or-shown-a-login-prompt-instead-of-being-able-to-create-or-edit-an-invite-if-the-user-navigates-directly-to-the-create-edit-url-without-being-logged-in-display-an-authentication-prompt-or-redirect-to-the-home-page",
+      "title": "Gate the creator flow in `frontend/src/pages/CreateInvitePage.tsx` so that an unauthenticated user is redirected to the landing page (or shown a login prompt) instead of being able to create or edit an invite. If the user navigates directly to the create/edit URL without being logged in, display an authentication prompt or redirect to the home page.",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-gate-the-rsvp-responses-page-in-frontend-src-pages-rsvpresponsespage-tsx-so-that-only-the-authenticated-creator-of-the-specific-invite-can-view-its-rsvp-responses-on-load-fetch-the-invite-s-creator-principal-via-getinvitecreator-id-and-compare-it-to-the-current-authenticated-user-s-principal-if-the-user-is-not-authenticated-or-is-not-the-creator-show-an-access-denied-message-with-a-login-prompt-rather-than-displaying-the-response-data",
+      "title": "Gate the RSVP responses page in `frontend/src/pages/RSVPResponsesPage.tsx` so that only the authenticated creator of the specific invite can view its RSVP responses. On load, fetch the invite's creator principal via `getInviteCreator(id)` and compare it to the current authenticated user's principal. If the user is not authenticated or is not the creator, show an 'Access Denied' message with a login prompt rather than displaying the response data.",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-frontend-src-components-invitation-sharesection-tsx-or-invitepage-tsx-hide-the-view-rsvp-responses-button-from-guests-the-button-should-only-render-when-the-currently-authenticated-user-s-principal-matches-the-invite-s-creator-principal-obtained-via-getinvitecreator-guests-and-unauthenticated-users-must-not-see-this-button",
+      "title": "In `frontend/src/components/invitation/ShareSection.tsx` (or `InvitePage.tsx`), hide the 'View RSVP Responses' button from guests. The button should only render when the currently authenticated user's principal matches the invite's creator principal (obtained via `getInviteCreator`). Guests and unauthenticated users must not see this button.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-email-field-in-the-rsvp-form-frontend-src-components-invitation-rsvpform-tsx-optional-remove-the-required-validation-constraint-from-the-email-field-the-field-should-remain-visible-in-the-form-but-submission-must-succeed-even-when-the-email-is-left-blank",
+      "title": "Make the email field in the RSVP form (`frontend/src/components/invitation/RSVPForm.tsx`) optional — remove the `required` validation constraint from the email field. The field should remain visible in the form but submission must succeed even when the email is left blank.",
+      "reqIds": [
+        "REQ-43"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-4-new-premium-wedding-invitation-templates-as-react-components-1-mughal-garden-lush-mughal-era-aesthetic-with-deep-emerald-greens-ornate-arch-motifs-intricate-floral-jali-svg-patterns-and-gold-calligraphy-style-typography-2-vedic-fire-warm-amber-and-deep-crimson-evoking-sacred-fire-ceremony-agni-flame-svg-motifs-geometric-vedic-yantras-and-ochre-saffron-gradients-3-royal-navy-zari-deep-navy-blue-with-gold-zari-embroidery-inspired-svg-borders-regal-crest-motif-ivory-and-silver-accents-4-lotus-bloom-soft-pink-and-white-lotus-theme-with-layered-petal-svg-accents-delicate-pastel-gradients-and-a-serene-water-lily-motif-each-template-must-have-a-light-and-a-dark-variant-toggled-via-a-prop-be-full-bleed-cinematic-pages-no-boxed-card-layouts-include-a-premium-badge-on-the-template-selector-card-and-delegate-rendering-to-basetemplate-following-the-same-pattern-as-existing-templates-register-all-4-in-frontend-src-lib-templateregistry-ts",
+      "title": "Add 4 new premium wedding invitation templates as React components: (1) Mughal Garden — lush Mughal-era aesthetic with deep emerald greens, ornate arch motifs, intricate floral jali SVG patterns, and gold calligraphy-style typography; (2) Vedic Fire — warm amber and deep crimson evoking sacred fire ceremony, agni flame SVG motifs, geometric Vedic yantras, and ochre/saffron gradients; (3) Royal Navy Zari — deep navy blue with gold zari-embroidery-inspired SVG borders, regal crest motif, ivory and silver accents; (4) Lotus Bloom — soft pink and white lotus theme with layered petal SVG accents, delicate pastel gradients, and a serene water-lily motif. Each template must have a light and a dark variant toggled via a prop, be full-bleed cinematic pages (no boxed card layouts), include a 'Premium' badge on the template selector card, and delegate rendering to `BaseTemplate` following the same pattern as existing templates. Register all 4 in `frontend/src/lib/templateRegistry.ts`.",
+      "reqIds": [
+        "REQ-44"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-frontend-src-components-layout-applayout-tsx-to-display-an-internet-identity-login-logout-button-in-the-sticky-header-when-logged-out-show-a-login-button-that-triggers-internet-identity-authentication-when-logged-in-show-the-user-s-abbreviated-principal-and-a-logout-button-use-the-existing-useinternetidentity-hook-for-auth-state-and-actions",
+      "title": "Update `frontend/src/components/layout/AppLayout.tsx` to display an Internet Identity login/logout button in the sticky header. When logged out, show a 'Login' button that triggers Internet Identity authentication. When logged in, show the user's abbreviated principal and a 'Logout' button. Use the existing `useInternetIdentity` hook for auth state and actions.",
+      "reqIds": [
+        "REQ-45"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-text-visibility-in-the-rsvp-form-section-across-all-invitation-templates-update-text-colors-for-all-form-elements-labels-input-fields-textarea-dropdown-select-radio-buttons-placeholder-text-and-helper-text-so-they-have-strong-contrast-against-their-backgrounds-in-both-light-and-dark-template-variants-specifically-in-rsvpform-tsx-ensure-input-textarea-select-elements-use-a-dark-text-color-e-g-near-black-or-deep-maroon-on-light-backgrounds-and-a-near-white-or-ivory-text-color-on-dark-backgrounds-labels-must-also-be-clearly-legible-do-not-rely-solely-on-the-inherited-template-color-but-explicitly-set-text-colors-on-each-form-element-to-guarantee-readability",
+      "title": "Fix text visibility in the RSVP form section across all invitation templates. Update text colors for all form elements — labels, input fields, textarea, dropdown/select, radio buttons, placeholder text, and helper text — so they have strong contrast against their backgrounds in both light and dark template variants. Specifically, in RSVPForm.tsx ensure input/textarea/select elements use a dark text color (e.g., near-black or deep-maroon) on light backgrounds and a near-white or ivory text color on dark backgrounds. Labels must also be clearly legible. Do not rely solely on the inherited template color, but explicitly set text colors on each form element to guarantee readability.",
+      "reqIds": [
+        "REQ-46"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-edit-flow-in-createinvitepage-tsx-so-that-when-a-user-clicks-edit-on-an-existing-invite-from-the-dashboard-navigating-to-the-creator-flow-with-an-invite-id-in-the-url-or-route-params-the-form-state-is-fully-pre-populated-with-the-saved-invite-data-fetched-from-the-backend-on-mount-if-an-existing-invite-id-is-present-fetch-the-invite-record-using-the-existing-getinvite-query-and-initialize-all-form-state-fields-from-the-returned-record-including-selected-template-id-and-dark-light-variant-couple-details-bride-name-groom-name-wedding-date-time-tagline-rsvp-thank-you-message-events-list-all-event-objects-with-name-date-time-venue-address-google-maps-url-gallery-image-references-and-background-music-reference-image-fields-that-were-stored-via-chunked-upload-should-be-represented-by-their-stored-reference-tokens-or-keys-not-re-uploaded-the-form-must-open-at-step-1-or-the-first-step-pre-filled-allowing-the-user-to-navigate-through-steps-and-see-their-previously-saved-data",
+      "title": "Fix the edit flow in CreateInvitePage.tsx so that when a user clicks 'Edit' on an existing invite from the dashboard (navigating to the creator flow with an invite ID in the URL or route params), the form state is fully pre-populated with the saved invite data fetched from the backend. On mount, if an existing invite ID is present, fetch the invite record using the existing getInvite query and initialize all form state fields from the returned record — including: selected template ID and dark/light variant, couple details (bride name, groom name, wedding date/time, tagline, RSVP thank-you message), events list (all event objects with name, date/time, venue, address, Google Maps URL), gallery image references, and background music reference. Image fields that were stored via chunked upload should be represented by their stored reference tokens or keys, not re-uploaded. The form must open at Step 1 (or the first step) pre-filled, allowing the user to navigate through steps and see their previously saved data.",
+      "reqIds": [
+        "REQ-47"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-basetemplate-tsx-add-support-for-a-rsvpbackground-prop-a-css-color-string-or-tailwind-class-that-is-applied-as-the-background-of-the-rsvp-section-container-if-no-rsvpbackground-is-provided-fall-back-to-the-existing-glassmorphism-default",
+      "title": "In BaseTemplate.tsx, add support for a `rsvpBackground` prop (a CSS color string or Tailwind class) that is applied as the background of the RSVP section container. If no `rsvpBackground` is provided, fall back to the existing glassmorphism default.",
+      "reqIds": [
+        "REQ-48"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-royalrajasthanitemplate-tsx-to-pass-a-deep-maroon-tint-e-g-rgba-80-10-20-0-88-as-the-rsvp-section-background-via-the-rsvpbackground-prop-on-basetemplate-ensuring-strong-contrast-for-form-labels-and-inputs-in-both-light-and-dark-variants",
+      "title": "Update RoyalRajasthaniTemplate.tsx to pass a deep maroon tint (e.g., rgba(80, 10, 20, 0.88)) as the RSVP section background via the `rsvpBackground` prop on BaseTemplate, ensuring strong contrast for form labels and inputs in both light and dark variants.",
+      "reqIds": [
+        "REQ-49"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-templemandalatemplate-tsx-to-pass-a-rich-ochre-maroon-tint-e-g-rgba-90-40-10-0-90-as-the-rsvp-section-background-that-complements-its-burnt-orange-and-ochre-palette",
+      "title": "Update TempleMandalaTemplate.tsx to pass a rich ochre/maroon tint (e.g., rgba(90, 40, 10, 0.90)) as the RSVP section background that complements its burnt orange and ochre palette.",
+      "reqIds": [
+        "REQ-50"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-darkcosmictemplate-tsx-to-pass-a-near-black-deep-navy-tint-e-g-rgba-5-5-30-0-92-as-the-rsvp-section-background-that-fits-its-starfield-cosmic-palette",
+      "title": "Update DarkCosmicTemplate.tsx to pass a near-black deep navy tint (e.g., rgba(5, 5, 30, 0.92)) as the RSVP section background that fits its starfield/cosmic palette.",
+      "reqIds": [
+        "REQ-51"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-floralmarigoldtemplate-tsx-to-pass-a-deep-amber-burnt-orange-tint-e-g-rgba-130-50-5-0-88-as-the-rsvp-section-background-that-fits-its-marigold-palette",
+      "title": "Update FloralMarigoldTemplate.tsx to pass a deep amber/burnt orange tint (e.g., rgba(130, 50, 5, 0.88)) as the RSVP section background that fits its marigold palette.",
+      "reqIds": [
+        "REQ-52"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-southindianbronzetemplate-tsx-to-pass-a-dark-bronze-copper-tint-e-g-rgba-60-30-10-0-90-as-the-rsvp-section-background-that-fits-its-bronze-copper-palette",
+      "title": "Update SouthIndianBronzeTemplate.tsx to pass a dark bronze/copper tint (e.g., rgba(60, 30, 10, 0.90)) as the RSVP section background that fits its bronze/copper palette.",
+      "reqIds": [
+        "REQ-53"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-minimalsanskrittemplate-tsx-to-pass-a-warm-parchment-cream-tint-e-g-rgba-245-238-220-0-95-as-the-rsvp-section-background-that-fits-its-ivory-cream-palette-and-ensure-form-text-uses-dark-near-black-tones-for-contrast",
+      "title": "Update MinimalSanskritTemplate.tsx to pass a warm parchment/cream tint (e.g., rgba(245, 238, 220, 0.95)) as the RSVP section background that fits its ivory/cream palette, and ensure form text uses dark near-black tones for contrast.",
+      "reqIds": [
+        "REQ-54"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-sunsetbeachtemplate-tsx-to-pass-a-deep-sunset-coral-terracotta-tint-e-g-rgba-120-50-20-0-88-as-the-rsvp-section-background-that-fits-its-warm-sunset-gradient-palette",
+      "title": "Update SunsetBeachTemplate.tsx to pass a deep sunset coral/terracotta tint (e.g., rgba(120, 50, 20, 0.88)) as the RSVP section background that fits its warm sunset gradient palette.",
+      "reqIds": [
+        "REQ-55"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-threedfloatingdivinetemplate-tsx-to-pass-a-deep-divine-purple-tint-e-g-rgba-30-5-60-0-92-as-the-rsvp-section-background-that-fits-its-purple-gold-palette",
+      "title": "Update ThreeDFloatingDivineTemplate.tsx to pass a deep divine purple tint (e.g., rgba(30, 5, 60, 0.92)) as the RSVP section background that fits its purple/gold palette.",
+      "reqIds": [
+        "REQ-56"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-mughalgardentemplate-tsx-to-pass-a-deep-emerald-green-tint-e-g-rgba-5-50-30-0-90-as-the-rsvp-section-background-that-fits-its-mughal-emerald-gold-palette",
+      "title": "Update MughalGardenTemplate.tsx to pass a deep emerald green tint (e.g., rgba(5, 50, 30, 0.90)) as the RSVP section background that fits its Mughal emerald/gold palette.",
+      "reqIds": [
+        "REQ-57"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-vedicfiretemplate-tsx-to-pass-a-deep-crimson-amber-tint-e-g-rgba-100-20-5-0-90-as-the-rsvp-section-background-that-fits-its-sacred-fire-amber-crimson-palette",
+      "title": "Update VedicFireTemplate.tsx to pass a deep crimson/amber tint (e.g., rgba(100, 20, 5, 0.90)) as the RSVP section background that fits its sacred fire amber/crimson palette.",
+      "reqIds": [
+        "REQ-58"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-royalrajasthanitemplate-tsx-replace-the-existing-generic-golden-patterns-with-unique-intricate-rajasthani-filigree-jali-lattice-panels-and-paisley-boteh-motifs-rendered-as-inline-svgs-the-jali-pattern-should-tile-as-a-fine-geometric-grid-overlay-across-the-hero-and-body-sections-paisley-clusters-should-frame-section-dividers-add-a-subtle-radial-depth-shadow-overlay-beneath-the-main-hero-layer-to-create-a-3d-cinematic-depth-effect",
+      "title": "Fully redesign the SVG decorative motifs in RoyalRajasthaniTemplate.tsx. Replace the existing generic golden patterns with unique, intricate Rajasthani filigree jali lattice panels and paisley (boteh) motifs rendered as inline SVGs. The jali pattern should tile as a fine geometric grid overlay across the hero and body sections. Paisley clusters should frame section dividers. Add a subtle radial depth shadow overlay beneath the main hero layer to create a 3D cinematic depth effect.",
+      "reqIds": [
+        "REQ-61"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-templemandalatemplate-tsx-replace-existing-patterns-with-layered-concentric-mandala-geometry-a-large-primary-mandala-with-12-fold-symmetry-as-a-background-circle-overlay-and-smaller-secondary-mandalas-at-section-corners-add-a-vignette-depth-gradient-overlay-in-the-hero-section-to-create-a-3d-immersive-effect-motifs-should-use-ochre-maroon-and-gold-tones-matching-the-temple-palette",
+      "title": "Fully redesign the SVG decorative motifs in TempleMandalaTemplate.tsx. Replace existing patterns with layered concentric mandala geometry: a large primary mandala with 12-fold symmetry as a background circle overlay, and smaller secondary mandalas at section corners. Add a vignette depth gradient overlay in the hero section to create a 3D immersive effect. Motifs should use ochre, maroon, and gold tones matching the temple palette.",
+      "reqIds": [
+        "REQ-62"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-darkcosmictemplate-tsx-replace-existing-patterns-with-constellation-line-art-overlays-connected-star-dot-constellations-spread-across-the-hero-and-body-using-gold-stroke-lines-and-small-circle-nodes-plus-a-series-of-celestial-arc-rings-like-orbital-paths-centered-behind-the-couple-names-add-a-radial-starfield-glow-overlay-for-depth",
+      "title": "Fully redesign the SVG decorative motifs in DarkCosmicTemplate.tsx. Replace existing patterns with constellation line-art overlays: connected star-dot constellations spread across the hero and body using gold stroke lines and small circle nodes, plus a series of celestial arc rings (like orbital paths) centered behind the couple names. Add a radial starfield glow overlay for depth.",
+      "reqIds": [
+        "REQ-63"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-floralmarigoldtemplate-tsx-replace-existing-patterns-with-lush-marigold-garland-border-svgs-a-dense-string-of-flowers-garland-border-running-along-the-top-and-bottom-of-the-hero-section-stylized-individual-marigold-bloom-icons-scattered-as-section-dividers-and-a-layered-petal-crown-above-the-couple-names-add-a-warm-bloom-glow-overlay-behind-the-hero-text-for-depth",
+      "title": "Fully redesign the SVG decorative motifs in FloralMarigoldTemplate.tsx. Replace existing patterns with lush marigold garland border SVGs: a dense string-of-flowers garland border running along the top and bottom of the hero section, stylized individual marigold bloom icons scattered as section dividers, and a layered petal crown above the couple names. Add a warm bloom-glow overlay behind the hero text for depth.",
+      "reqIds": [
+        "REQ-64"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-southindianbronzetemplate-tsx-replace-existing-patterns-with-kolam-inspired-dot-grid-geometric-patterns-a-traditional-dot-and-curve-kolam-floor-pattern-as-a-faded-full-width-background-overlay-and-smaller-kolam-border-strips-as-section-dividers-add-corner-kolam-corner-knot-motifs-include-a-bronze-metallic-sheen-radial-gradient-overlay-in-the-hero-for-a-3d-material-depth-effect",
+      "title": "Fully redesign the SVG decorative motifs in SouthIndianBronzeTemplate.tsx. Replace existing patterns with Kolam-inspired dot-grid geometric patterns: a traditional dot-and-curve Kolam floor pattern as a faded full-width background overlay, and smaller Kolam border strips as section dividers. Add corner Kolam corner-knot motifs. Include a bronze metallic sheen radial gradient overlay in the hero for a 3D material depth effect.",
+      "reqIds": [
+        "REQ-65"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-minimalsanskrittemplate-tsx-replace-existing-patterns-with-refined-om-calligraphy-watermarks-a-large-semi-transparent-om-symbol-centered-on-the-body-background-delicate-lotus-line-art-dividers-between-sections-and-a-subtle-devanagari-script-floral-border-strip-at-the-top-and-bottom-of-the-hero-keep-all-motifs-minimal-monochromatic-and-in-ivory-gold-tones-add-a-soft-vignette-overlay-for-depth",
+      "title": "Fully redesign the SVG decorative motifs in MinimalSanskritTemplate.tsx. Replace existing patterns with refined Om calligraphy watermarks (a large semi-transparent Om symbol centered on the body background), delicate lotus line-art dividers between sections, and a subtle Devanagari-script floral border strip at the top and bottom of the hero. Keep all motifs minimal, monochromatic, and in ivory/gold tones. Add a soft vignette overlay for depth.",
+      "reqIds": [
+        "REQ-66"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-sunsetbeachtemplate-tsx-replace-existing-patterns-with-stylized-wave-crest-svg-borders-along-the-top-and-bottom-of-the-hero-tropical-foliage-silhouettes-palm-fronds-and-beach-grass-as-left-right-edge-accents-and-a-sun-burst-radial-halo-svg-centered-behind-the-couple-names-add-a-warm-gradient-depth-glow-in-the-hero-for-a-3d-cinematic-sunset-feel",
+      "title": "Fully redesign the SVG decorative motifs in SunsetBeachTemplate.tsx. Replace existing patterns with stylized wave-crest SVG borders along the top and bottom of the hero, tropical foliage silhouettes (palm fronds and beach grass) as left/right edge accents, and a sun-burst radial halo SVG centered behind the couple names. Add a warm gradient depth glow in the hero for a 3D cinematic sunset feel.",
+      "reqIds": [
+        "REQ-67"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-threedfloatingdivinetemplate-tsx-replace-existing-patterns-with-divine-lotus-mandalas-a-large-radiant-lotus-svg-with-concentric-petals-and-a-gold-halo-ring-centered-in-the-hero-as-a-background-glow-layer-and-layered-semi-transparent-lotus-petal-rings-at-increasing-z-depths-creating-a-3d-floating-illusion-add-purple-to-gold-radial-glow-overlays-for-immersive-depth",
+      "title": "Fully redesign the SVG decorative motifs in ThreeDFloatingDivineTemplate.tsx. Replace existing patterns with divine lotus mandalas: a large radiant lotus SVG with concentric petals and a gold halo ring centered in the hero as a background glow layer, and layered semi-transparent lotus petal rings at increasing z-depths creating a 3D floating illusion. Add purple-to-gold radial glow overlays for immersive depth.",
+      "reqIds": [
+        "REQ-68"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-mughalgardentemplate-tsx-replace-existing-patterns-with-ornate-mughal-arch-frames-a-pointed-horseshoe-arch-outline-used-as-a-frame-around-the-hero-couple-names-area-a-floral-jali-lattice-pattern-geometric-interlocking-floral-shapes-in-a-grid-as-a-background-tile-overlay-and-detailed-corner-rosette-motifs-in-gold-emerald-add-a-deep-shadow-inner-frame-vignette-overlay-for-cinematic-depth",
+      "title": "Fully redesign the SVG decorative motifs in MughalGardenTemplate.tsx. Replace existing patterns with ornate Mughal arch frames (a pointed horseshoe arch outline used as a frame around the hero couple names area), a floral jali lattice pattern (geometric interlocking floral shapes in a grid) as a background tile overlay, and detailed corner rosette motifs in gold/emerald. Add a deep-shadow inner-frame vignette overlay for cinematic depth.",
+      "reqIds": [
+        "REQ-69"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fully-redesign-the-svg-decorative-motifs-in-vedicfiretemplate-tsx-replace-existing-patterns-with-agni-flame-svgs-stylized-fire-tongue-shapes-rising-from-the-bottom-of-the-hero-section-sri-yantra-inspired-geometric-triangle-nesting-patterns-upward-and-downward-interlocking-triangles-as-a-centered-background-overlay-and-a-circular-vedic-yantra-ring-frame-around-the-couple-names-add-an-ember-glow-radial-overlay-in-deep-amber-crimson-for-3d-fire-depth",
+      "title": "Fully redesign the SVG decorative motifs in VedicFireTemplate.tsx. Replace existing patterns with agni flame SVGs (stylized fire tongue shapes rising from the bottom of the hero section), Sri Yantra-inspired geometric triangle nesting patterns (upward and downward interlocking triangles) as a centered background overlay, and a circular Vedic yantra ring frame around the couple names. Add an ember glow radial overlay in deep amber/crimson for 3D fire depth.",
+      "reqIds": [
+        "REQ-70"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-frontend-src-hooks-usequeries-ts-and-any-hook-that-vends-the-backend-actor-ensure-the-actor-returned-by-useactor-is-not-passed-downstream-until-it-is-confirmed-non-null-any-mutation-hook-e-g-usecreateinvite-useupdateinvite-must-guard-against-a-null-undefined-actor-and-return-a-descriptive-error-to-the-caller-if-the-actor-is-unavailable-rather-than-throwing",
+      "title": "In `frontend/src/hooks/useQueries.ts` (and any hook that vends the backend actor), ensure the actor returned by `useActor` is not passed downstream until it is confirmed non-null. Any mutation hook (e.g., `useCreateInvite`, `useUpdateInvite`) must guard against a null/undefined actor and return a descriptive error to the caller if the actor is unavailable rather than throwing.",
+      "reqIds": [
+        "REQ-74"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-frontend-src-components-creator-steppublish-tsx-disable-the-publish-button-and-show-a-loading-spinner-state-while-the-actor-is-still-initializing-once-the-actor-is-ready-enable-the-button-this-prevents-users-from-clicking-publish-before-the-backend-client-is-available",
+      "title": "In `frontend/src/components/creator/StepPublish.tsx`, disable the Publish button and show a loading/spinner state while the actor is still initializing. Once the actor is ready, enable the button. This prevents users from clicking Publish before the backend client is available.",
+      "reqIds": [
+        "REQ-75"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-steppublish-tsx-replace-the-current-actor-readiness-guard-with-a-fully-reactive-implementation-subscribe-to-the-actor-reference-via-a-useeffect-or-usememo-that-watches-the-actor-value-from-useactor-derive-an-isactorready-boolean-that-is-only-true-when-the-actor-is-confirmed-non-null-and-the-internet-identity-session-is-active-disable-the-publish-invitation-button-and-show-a-connecting-to-backend-spinner-label-whenever-isactorready-is-false-the-publish-handler-must-perform-an-explicit-null-check-on-the-actor-at-invocation-time-and-abort-with-a-user-facing-inline-error-message-if-it-is-still-null-it-must-never-call-the-canister-with-a-null-actor",
+      "title": "In StepPublish.tsx, replace the current actor readiness guard with a fully reactive implementation: subscribe to the actor reference via a useEffect or useMemo that watches the actor value from useActor; derive an `isActorReady` boolean that is only true when the actor is confirmed non-null and the Internet Identity session is active. Disable the 'Publish Invitation' button and show a 'Connecting to backend…' spinner/label whenever `isActorReady` is false. The publish handler must perform an explicit null-check on the actor at invocation time and abort with a user-facing inline error message if it is still null — it must never call the canister with a null actor.",
+      "reqIds": [
+        "REQ-76"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -228,12 +545,6 @@
     {
       "id": "AR-6",
       "summary": "RSVP form (name, phone, email, attending, guest count, meal preference, message) with confetti/petal burst success animation and customizable thank-you text",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Anonymous invite creation; shareable unique URL per invite and QR code generation",
       "reqIds": [],
       "status": "pending"
     },
@@ -339,6 +650,174 @@
       "id": "AR-24",
       "summary": "Add a WhatsApp sharing button on the invitation page so guests can share the invite link via WhatsApp",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "In the Motoko backend main.mo, ensure the createInvite and updateInvite endpoints handle all required fields in the InvitePayload type without type mismatches or missing field errors that would cause the call to be rejected. Verify the return type of createInvite includes the newly created invite ID so the frontend can construct the shareable URL. Add defensive error handling so malformed payloads return a descriptive error rather than trapping silently.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-27",
+      "summary": "In CreateInvitePage.tsx, audit the payload construction block that assembles the InvitePayload before calling createInvite/updateInvite. Ensure all required fields are present and correctly typed (no undefined values passed where the Motoko type expects a concrete value). Replace any remaining blob: or object URL references in the payload with empty strings or omit image fields entirely (since images are stored via chunked upload). Wrap the actor call in a try/catch and display a toast or inline error if it rejects, so the user is informed of any failure.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-30",
+      "summary": "Build an RSVP responses page at /invite/:id/responses showing a summary (total attending, total guests, total responses) and a table of all respondents (name, attendance status, guest count, meal preference, message). Accessible to anyone with the invite ID. Add a link/button on the published invitation page pointing to the responses view. Style to match the existing cinematic Hindu wedding theme without touching existing functionality.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-31",
+      "summary": "In the Motoko backend (backend/main.mo), add a getRSVPResponses(inviteId: Text) query endpoint that returns all RSVP submissions for a given invite ID. No authentication required — anyone with the invite ID can call it. The return value must include each respondent's full name, phone, email, attending status, guest count, meal preference, and message, plus the submission timestamp.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Implement Internet Identity login — only authenticated users can create/edit invites and view RSVP responses; anonymous invite creation is disabled",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-33",
+      "summary": "Home/landing page transforms into a personal 'My Invitations' dashboard when the user is logged in, showing their invites with Edit and View RSVP Responses options per invite",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-34",
+      "summary": "'View RSVP Responses' button on the published invitation page is hidden from guests — only visible to the logged-in creator of that specific invite",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-35",
+      "summary": "All invite management (create, edit, view RSVP responses) requires login; old anonymous invites are no longer editable",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-36",
+      "summary": "Make the email field in the RSVP form optional (not required)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-37",
+      "summary": "Add 4 new premium templates: Mughal Garden, Vedic Fire, Royal Navy Zari, and Lotus Bloom — each with light/dark variants and a Premium badge",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-38",
+      "summary": "Update the Motoko backend (backend/main.mo) to associate every invite with the authenticated caller's principal. Add a `creatorPrincipal` field to the InviteRecord type. On `createInvite`, store `caller` as the `creatorPrincipal`. On `updateInvite`, reject the call (return an error) if `caller` does not match the stored `creatorPrincipal`. Add a `getMyInvites()` query that returns all invites owned by the caller principal. Add a `getInviteCreator(inviteId: Text)` query that returns the creator principal for a given invite ID so the frontend can determine ownership. Keep `getInvite`, `submitRSVP`, and the public read paths unauthenticated. Reject `createInvite` if the caller is the anonymous principal.",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-44",
+      "summary": "Add a `getRSVPResponses` backend endpoint authorization check: only the creator principal of an invite may call `getRSVPResponses(inviteId)`. Return an access-denied error if the caller is not the creator. Update the backend `main.mo` accordingly.",
+      "reqIds": [
+        "REQ-42"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-45",
+      "summary": "Fix RSVP section text visibility — text color blends into the background making it unreadable; update input/label/textarea/dropdown text colors for strong contrast across all templates",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-46",
+      "summary": "Fix edit flow not pre-filling saved invite data — when clicking Edit from the dashboard, all form fields are empty; initialize form state with saved invite data (couple details, events, template choice, all fields) fetched from the backend",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-47",
+      "summary": "Give each of the 12 templates its own palette-matched RSVP section background color (e.g., deep maroon for Royal Rajasthani, dark navy for Royal Navy Zari, emerald for Mughal Garden, etc.) so form labels and inputs are clearly readable",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-48",
+      "summary": "Fully redesign SVG decorative motifs for all 12 templates so each has unique per-template patterns (e.g., filigree jali for Royal Rajasthani, concentric mandala for Temple Mandala, constellations for Dark Cosmic, marigold garlands for Floral Marigold, Kolam patterns for South Indian Bronze, Om watermark for Minimal Sanskrit, waves for Sunset Beach, lotus halos for 3D Floating Divine, arch jali for Mughal Garden, agni yantra for Vedic Fire, zari embroidery for Royal Navy Zari, water-lily petals for Lotus Bloom) plus overlay depth/3D effects to make templates richer and more immersive",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-60",
+      "summary": "Update RoyalNavyZariTemplate.tsx to pass a deep navy blue tint (e.g., rgba(5, 10, 60, 0.92)) as the RSVP section background that fits its royal navy/gold zari palette.",
+      "reqIds": [
+        "REQ-59"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-61",
+      "summary": "Update LotusBloomTemplate.tsx to pass a deep rose/dusty pink tint (e.g., rgba(110, 30, 60, 0.88)) as the RSVP section background that fits its soft pink/lotus palette, ensuring form labels and inputs remain readable.",
+      "reqIds": [
+        "REQ-60"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-72",
+      "summary": "Fully redesign the SVG decorative motifs in RoyalNavyZariTemplate.tsx. Replace existing patterns with gold zari thread-stitch embroidery border SVGs: a densely stitched gold zari border strip running along all four edges of the hero section with a chevron/diamond stitch pattern, a regal crest/crown motif centered at the top of the hero, and small zari floral medallions as section dividers. Add a gold metallic sheen radial overlay in the hero for material depth.",
+      "reqIds": [
+        "REQ-71"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-73",
+      "summary": "Fully redesign the SVG decorative motifs in LotusBloomTemplate.tsx. Replace existing patterns with layered water-lily petal overlays: large multi-layered lotus flower SVGs with concentric petal rings fading from rose to soft white, used as background and section divider elements, a serene ripple-ring water surface SVG below the lotus blooms suggesting a pond surface, and delicate single floating petal silhouettes scattered across the layout. Add a soft pink radial bloom glow in the hero for 3D depth.",
+      "reqIds": [
+        "REQ-72"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-74",
+      "summary": "Fix 'Actor not available' error when clicking Publish Invitation — ensure the backend actor/canister client is fully initialized before the publish call is made, add a readiness check, and surface a clear error if the actor is unavailable",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-75",
+      "summary": "In `frontend/src/pages/CreateInvitePage.tsx`, add a readiness guard before the publish canister call: check that the actor instance is non-null and fully initialized before proceeding. If the actor is not yet available when the user clicks Publish, display a clear inline error message ('Backend not ready — please wait a moment and try again') and do not attempt the canister call. Do not silently fail or hang.",
+      "reqIds": [
+        "REQ-73"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-77",
+      "summary": "In CreateInvitePage.tsx, add a top-level actor readiness guard in the handlePublish function: before assembling the InvitePayload or making any canister call, check that the actor instance is strictly non-null. If the actor is null at this point, immediately abort the publish flow, display a clear inline error message to the user ('Backend connection unavailable — please wait a moment and try again'), and return early. This guard is a second line of defense in addition to the button-level guard in StepPublish.tsx.",
+      "reqIds": [
+        "REQ-77"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-78",
+      "summary": "In frontend/src/hooks/useQueries.ts, audit all mutation hooks (useCreateInvite, useUpdateInvite, and any other hook that calls the actor). Ensure each mutation function: (1) receives the actor as a dependency that is watched reactively, (2) performs an explicit non-null assertion on the actor before any canister call, and (3) throws or returns a descriptive error object (e.g., { error: 'Actor not initialized' }) if the actor is null — rather than throwing a generic JS error or calling a null reference. This ensures the error propagates gracefully to the calling component.",
+      "reqIds": [
+        "REQ-78"
+      ],
       "status": "pending"
     }
   ],

@@ -1,38 +1,43 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T06:04:00.773Z",
+  "generatedAt": "2026-03-02T09:59:49.076Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-25",
-        "summary": "In FloatingPhotoFrame.tsx and BaseTemplate.tsx, remove the decorative filigree frame/overlay SVG element that renders on top of or in the middle of the bride and groom photos. Replace it with a premium CSS border/boundary styled directly on the photo container — use a multi-layered border approach (e.g., a thick solid or double gold/saffron border with a subtle inset shadow and an outer glow) that frames the photo from the outside without any element overlapping the photo image itself. The photo must be fully visible at all times. The border style should feel premium and on-theme (gold tones, rounded or slightly ornate corners using border-radius or a clip-path, consistent with the Hindu wedding aesthetic). The floating 3D bobbing animation on the photo container should be retained.",
+        "id": "REQ-76",
+        "summary": "In StepPublish.tsx, replace the current actor readiness guard with a fully reactive implementation: subscribe to the actor reference via a useEffect or useMemo that watches the actor value from useActor; derive an `isActorReady` boolean that is only true when the actor is confirmed non-null and the Internet Identity session is active. Disable the 'Publish Invitation' button and show a 'Connecting to backend…' spinner/label whenever `isActorReady` is false. The publish handler must perform an explicit null-check on the actor at invocation time and abort with a user-facing inline error message if it is still null — it must never call the canister with a null actor.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/effects/FloatingPhotoFrame.tsx",
-          "frontend/src/components/templates/BaseTemplate.tsx"
+          "frontend/src/components/creator/StepPublish.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/effects/FloatingPhotoFrame.tsx",
-          "frontend/src/components/templates/BaseTemplate.tsx"
+          "frontend/src/components/creator/StepPublish.tsx"
         ]
       },
       {
-        "id": "REQ-26",
-        "summary": "Add a WhatsApp sharing button to the invitation page (InvitePage.tsx or ShareSection.tsx). The button should be visible on the published invitation page at /invite/:id. When clicked, it opens a WhatsApp share link in a new tab using the format https://wa.me/?text=<encoded message> where the message includes the couple names, wedding date, and the full shareable invitation URL. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond or Cinzel typography). Place it near the existing share/QR section or as a floating button.",
-        "status": "implemented",
+        "id": "REQ-77",
+        "summary": "In CreateInvitePage.tsx, add a top-level actor readiness guard in the handlePublish function: before assembling the InvitePayload or making any canister call, check that the actor instance is strictly non-null. If the actor is null at this point, immediately abort the publish flow, display a clear inline error message to the user ('Backend connection unavailable — please wait a moment and try again'), and return early. This guard is a second line of defense in addition to the button-level guard in StepPublish.tsx.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/invitation/ShareSection.tsx"
+          "frontend/src/pages/CreateInvitePage.tsx"
         ],
-        "matchedFiles": [
-          "frontend/src/components/invitation/ShareSection.tsx"
-        ]
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-78",
+        "summary": "In frontend/src/hooks/useQueries.ts, audit all mutation hooks (useCreateInvite, useUpdateInvite, and any other hook that calls the actor). Ensure each mutation function: (1) receives the actor as a dependency that is watched reactively, (2) performs an explicit non-null assertion on the actor before any canister call, and (3) throws or returns a descriptive error object (e.g., { error: 'Actor not initialized' }) if the actor is null — rather than throwing a generic JS error or calling a null reference. This ensures the error propagates gracefully to the calling component.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": []
       }
     ]
   },
@@ -41,9 +46,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/effects/FloatingPhotoFrame.tsx",
-    "frontend/src/components/invitation/ShareSection.tsx",
-    "frontend/src/components/templates/BaseTemplate.tsx",
+    "frontend/src/components/creator/StepPublish.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

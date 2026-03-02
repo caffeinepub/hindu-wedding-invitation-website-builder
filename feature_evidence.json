@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-floatingphotoframe-tsx-and-basetemplate-tsx-remove-the-decorative-filigree-frame-overlay-svg-element-that-renders-on-top-of-or-in-the-middle-of-the-bride-and-groom-photos-replace-it-with-a-premium-css-border-boundary-styled-directly-on-the-photo-container-use-a-multi-layered-border-approach-e-g-a-thick-solid-or-double-gold-saffron-border-with-a-subtle-inset-shadow-and-an-outer-glow-that-frames-the-photo-from-the-outside-without-any-element-overlapping-the-photo-image-itself-the-photo-must-be-fully-visible-at-all-times-the-border-style-should-feel-premium-and-on-theme-gold-tones-rounded-or-slightly-ornate-corners-using-border-radius-or-a-clip-path-consistent-with-the-hindu-wedding-aesthetic-the-floating-3d-bobbing-animation-on-the-photo-container-should-be-retained",
-      "featureTitle": "In FloatingPhotoFrame.tsx and BaseTemplate.tsx, remove the decorative filigree frame/overlay SVG element that renders on top of or in the middle of the bride and groom photos. Replace it with a premium CSS border/boundary styled directly on the photo container — use a multi-layered border approach (e.g., a thick solid or double gold/saffron border with a subtle inset shadow and an outer glow) that frames the photo from the outside without any element overlapping the photo image itself. The photo must be fully visible at all times. The border style should feel premium and on-theme (gold tones, rounded or slightly ornate corners using border-radius or a clip-path, consistent with the Hindu wedding aesthetic). The floating 3D bobbing animation on the photo container should be retained.",
+      "featureId": "feature-in-steppublish-tsx-replace-the-current-actor-readiness-guard-with-a-fully-reactive-implementation-subscribe-to-the-actor-reference-via-a-useeffect-or-usememo-that-watches-the-actor-value-from-useactor-derive-an-isactorready-boolean-that-is-only-true-when-the-actor-is-confirmed-non-null-and-the-internet-identity-session-is-active-disable-the-publish-invitation-button-and-show-a-connecting-to-backend-spinner-label-whenever-isactorready-is-false-the-publish-handler-must-perform-an-explicit-null-check-on-the-actor-at-invocation-time-and-abort-with-a-user-facing-inline-error-message-if-it-is-still-null-it-must-never-call-the-canister-with-a-null-actor",
+      "featureTitle": "In StepPublish.tsx, replace the current actor readiness guard with a fully reactive implementation: subscribe to the actor reference via a useEffect or useMemo that watches the actor value from useActor; derive an `isActorReady` boolean that is only true when the actor is confirmed non-null and the Internet Identity session is active. Disable the 'Publish Invitation' button and show a 'Connecting to backend…' spinner/label whenever `isActorReady` is false. The publish handler must perform an explicit null-check on the actor at invocation time and abort with a user-facing inline error message if it is still null — it must never call the canister with a null actor.",
       "files": [
-        "frontend/src/components/effects/FloatingPhotoFrame.tsx",
-        "frontend/src/components/templates/BaseTemplate.tsx"
+        "frontend/src/components/creator/StepPublish.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -16,31 +15,12 @@
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
         "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
+        "camera@1.0.0",
+        "invite-links@3.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-25"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-whatsapp-sharing-button-to-the-invitation-page-invitepage-tsx-or-sharesection-tsx-the-button-should-be-visible-on-the-published-invitation-page-at-invite-id-when-clicked-it-opens-a-whatsapp-share-link-in-a-new-tab-using-the-format-https-wa-me-text-encoded-message-where-the-message-includes-the-couple-names-wedding-date-and-the-full-shareable-invitation-url-style-the-button-to-match-the-app-s-premium-theme-gold-saffron-accent-cormorant-garamond-or-cinzel-typography-place-it-near-the-existing-share-qr-section-or-as-a-floating-button",
-      "featureTitle": "Add a WhatsApp sharing button to the invitation page (InvitePage.tsx or ShareSection.tsx). The button should be visible on the published invitation page at /invite/:id. When clicked, it opens a WhatsApp share link in a new tab using the format https://wa.me/?text=<encoded message> where the message includes the couple names, wedding date, and the full shareable invitation URL. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond or Cinzel typography). Place it near the existing share/QR section or as a floating button.",
-      "files": [
-        "frontend/src/components/invitation/ShareSection.tsx"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-26"
+        "REQ-76"
       ],
       "confidence": "high"
     }

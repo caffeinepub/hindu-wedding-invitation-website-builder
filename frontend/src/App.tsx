@@ -1,17 +1,14 @@
-import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet } from '@tanstack/react-router';
+import { RouterProvider, createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import LandingPage from './pages/LandingPage';
 import CreateInvitePage from './pages/CreateInvitePage';
 import InvitePage from './pages/InvitePage';
-import { Toaster } from '@/components/ui/sonner';
+import RSVPResponsesPage from './pages/RSVPResponsesPage';
 
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <Toaster richColors position="top-right" />
-    </>
-  ),
-});
+const queryClient = new QueryClient();
+
+const rootRoute = createRootRoute();
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -31,7 +28,18 @@ const inviteRoute = createRoute({
   component: InvitePage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, createRoute_, inviteRoute]);
+const rsvpResponsesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/invite/$id/responses',
+  component: RSVPResponsesPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  createRoute_,
+  inviteRoute,
+  rsvpResponsesRoute,
+]);
 
 const router = createRouter({ routeTree });
 
@@ -42,5 +50,11 @@ declare module '@tanstack/react-router' {
 }
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
 }

@@ -14,12 +14,14 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export interface ScheduleItem {
-    venue: string;
-    name: string;
-    time: string;
-    details: string;
-}
+export type UpdateInviteResult = {
+    __kind__: "ok";
+    ok: null;
+} | {
+    __kind__: "error";
+    error: string;
+};
+export type Time = bigint;
 export interface RSVPRecord {
     name: string;
     attendance: boolean;
@@ -39,15 +41,35 @@ export interface InviteRecord {
     isSample: boolean;
     coverPhoto: ExternalBlob;
     events: Array<ScheduleItem>;
+    creatorPrincipal: Principal;
     coupleNames: string;
     backgroundMusic: string;
     rsvpResponses: Array<RSVPRecord>;
     bridePhoto: ExternalBlob;
 }
-export interface SectionConfig {
-    isActive: boolean;
-    customTitle: string;
-    customText: string;
+export type CreateInviteResult = {
+    __kind__: "ok";
+    ok: string;
+} | {
+    __kind__: "error";
+    error: string;
+};
+export interface InviteCode {
+    created: Time;
+    code: string;
+    used: boolean;
+}
+export interface RSVP {
+    name: string;
+    inviteCode: string;
+    timestamp: Time;
+    attending: boolean;
+}
+export interface ScheduleItem {
+    venue: string;
+    name: string;
+    time: string;
+    details: string;
 }
 export interface InvitePayload {
     galleryImages: Array<ExternalBlob>;
@@ -63,10 +85,36 @@ export interface InvitePayload {
     backgroundMusic: string;
     bridePhoto: ExternalBlob;
 }
+export interface SectionConfig {
+    isActive: boolean;
+    customTitle: string;
+    customText: string;
+}
+export interface UserProfile {
+    name: string;
+    email: string;
+}
+export enum UserRole {
+    admin = "admin",
+    user = "user",
+    guest = "guest"
+}
 export interface backendInterface {
-    createInvite(id: string, payload: InvitePayload): Promise<string>;
+    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createInvite(id: string, payload: InvitePayload): Promise<CreateInviteResult>;
+    generateInviteCode(): Promise<string>;
+    getAllRSVPs(): Promise<Array<RSVP>>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
+    getCallerUserRole(): Promise<UserRole>;
     getInvite(id: string): Promise<InviteRecord | null>;
-    listSampleInvites(): Promise<Array<InviteRecord>>;
-    submitRSVP(id: string, rsvp: RSVPRecord): Promise<void>;
-    updateInvite(id: string, payload: InvitePayload): Promise<void>;
+    getInviteCodes(): Promise<Array<InviteCode>>;
+    getInviteCreator(inviteId: string): Promise<Principal | null>;
+    getMyInvites(): Promise<Array<InviteRecord>>;
+    getRSVPResponses(inviteId: string): Promise<Array<RSVPRecord>>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isCallerAdmin(): Promise<boolean>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    submitInviteRSVP(id: string, rsvp: RSVPRecord): Promise<void>;
+    submitRSVP(name: string, attending: boolean, inviteCode: string): Promise<void>;
+    updateInvite(id: string, payload: InvitePayload): Promise<UpdateInviteResult>;
 }

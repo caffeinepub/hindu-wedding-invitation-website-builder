@@ -1,6 +1,6 @@
 import { TEMPLATES } from '../../lib/templateRegistry';
 import { cn } from '../../lib/utils';
-import { Check, Sun, Moon } from 'lucide-react';
+import { Check, Sun, Moon, Sparkles } from 'lucide-react';
 
 interface StepTemplateSelectorProps {
   selectedId: string;
@@ -55,13 +55,21 @@ export default function StepTemplateSelector({
           >
             <div className="aspect-[3/2] overflow-hidden">
               <img
-                src={t.thumb}
+                src={t.thumbnail}
                 alt={t.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>
             <div className="p-3 bg-deepMaroon/80 backdrop-blur-sm">
-              <p className="font-cormorant font-bold text-ivory text-sm">{t.name}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="font-cormorant font-bold text-ivory text-sm">{t.name}</p>
+                {t.premium && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon text-xs font-bold font-raleway tracking-wide">
+                    <Sparkles size={9} />
+                    Premium
+                  </span>
+                )}
+              </div>
               <p className="font-garamond text-ivory/50 text-xs mt-0.5 line-clamp-1">{t.description}</p>
             </div>
             {selectedId === t.id && (

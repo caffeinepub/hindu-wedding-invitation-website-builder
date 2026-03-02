@@ -1,49 +1,57 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Replace photo frame overlay with premium border and add WhatsApp sharing button",
+  "title": "Fix 'Backend connection unavailable' error firing immediately on Publish click",
   "requirements": [
     {
-      "id": "REQ-25",
-      "summary": "Remove overlapping SVG filigree frame from bride/groom photos and replace with premium CSS border styling",
+      "id": "REQ-76",
+      "summary": "Replace the current actor readiness guard in StepPublish.tsx with a fully reactive implementation that subscribes to the actor reference, derives an isActorReady boolean, disables the publish button with a spinner/label when the actor is not ready, and performs an explicit null-check at invocation time",
       "acceptanceCriteria": [
-        "No SVG filigree or overlay element renders on top of or across the bride/groom photo area.",
-        "The photo is fully visible without any element covering any portion of the image.",
-        "A premium-looking border/boundary is visible around the outside edge of each photo container.",
-        "The border uses gold/saffron tones consistent with the app's Hindu wedding theme.",
-        "The border styling looks premium across all 8 templates in both light and dark variants.",
-        "The floating 3D bobbing animation on the photo frame container is still present and functional.",
-        "The reduce-motion toggle still disables the bobbing animation when enabled."
+        "The 'Publish Invitation' button is disabled and shows 'Connecting to backend…' text/spinner from the moment the StepPublish component mounts until the actor reference is confirmed non-null.",
+        "Clicking the button while the actor is null does nothing — no error toast, no canister call, no hang.",
+        "Once the actor becomes non-null, the button becomes enabled automatically without requiring a page refresh.",
+        "If the actor is null at the moment the publish handler fires (race condition), a clear inline error message is displayed ('Backend not ready — please wait a moment and try again') and the canister call is not attempted.",
+        "The spinner/disabled state does not flash unnecessarily if the actor initializes quickly — it should resolve smoothly."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/effects/FloatingPhotoFrame.tsx",
+          "path": "frontend/src/components/creator/StepPublish.tsx",
           "operation": "modify",
-          "description": "Remove the filigree frame overlay image (frontend/public/assets/generated/filigree-frame.dim_600x800.png) that renders on top of the bride/groom photos. Replace the overlaid frame with a premium multi-layered CSS border applied directly to the photo container using a combination of border, box-shadow, and outline properties. Style the border with gold/saffron tones (using theme colors from the app's palette), rounded corners via border-radius, and subtle inset/outer glow effects. Preserve the existing floating 3D bobbing animation logic and reduced-motion detection. Ensure the photo image is always fully visible without any overlapping decorative elements."
-        },
-        {
-          "path": "frontend/src/components/templates/BaseTemplate.tsx",
-          "operation": "modify",
-          "description": "Update the couple photos section where FloatingPhotoFrame is used to ensure the new premium CSS border styling is consistent across all template variants. Verify that the border styling works correctly in both light and dark theme modes. If there are any hardcoded frame-related styles or wrapper elements specific to the old overlay approach, remove or adjust them to support the new border-only design. Ensure the floating animation remains functional and that the reduce-motion preference is respected."
+          "description": "Add a reactive actor readiness check using useActor hook in a useEffect or useMemo that watches the actor value. Derive an isActorReady boolean that is only true when the actor is confirmed non-null. Update the UI to disable the 'Publish Invitation' button and show a 'Connecting to backend…' spinner/label whenever isActorReady is false. In the publish handler (handlePublish), add an explicit null-check on the actor at invocation time and abort with a user-facing inline error message ('Backend not ready — please wait a moment and try again') if it is still null, ensuring no canister call is attempted with a null actor."
         }
       ]
     },
     {
-      "id": "REQ-26",
-      "summary": "Add WhatsApp sharing button to invitation page with couple names, wedding date, and invitation URL",
+      "id": "REQ-77",
+      "summary": "Add a top-level actor readiness guard in CreateInvitePage.tsx handlePublish function that checks the actor is strictly non-null before assembling the InvitePayload, and aborts with a clear inline error message if the actor is null",
       "acceptanceCriteria": [
-        "A WhatsApp sharing button is visible on every published invitation page at /invite/:id.",
-        "Clicking the button opens a new browser tab with a wa.me share URL.",
-        "The WhatsApp share message includes the couple names, wedding date, and the full invitation URL.",
-        "The button is styled consistently with the app's premium Hindu wedding theme (gold accents, matching typography).",
-        "The button is responsive and visible on both mobile and desktop viewports.",
-        "The WhatsApp icon or label clearly identifies the button as a WhatsApp share action."
+        "handlePublish in CreateInvitePage.tsx returns early with a visible error if the actor is null at call time.",
+        "The error message is shown inline (not just in the browser console) so the user knows what happened.",
+        "No canister call is attempted when the actor is null.",
+        "The normal publish flow is unaffected when the actor is properly initialized."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/invitation/ShareSection.tsx",
+          "path": "frontend/src/pages/CreateInvitePage.tsx",
           "operation": "modify",
-          "description": "Add a WhatsApp sharing button alongside the existing QR code and copyable URL. When clicked, the button should construct a WhatsApp share URL in the format https://wa.me/?text=<encoded message> where the message includes the couple names (from invite.coupleNames), the formatted wedding date (using the existing date formatting utility from lib/utils.ts), and the full invitation URL (window.location.href or constructed from the invite ID). Open the WhatsApp URL in a new browser tab using window.open or target=\"_blank\". Style the button to match the app's premium theme using gold/saffron accents, Cormorant Garamond or Cinzel typography, and ensure it is responsive. Use a recognizable WhatsApp icon (either an SVG or a Unicode symbol) to clearly identify the button's purpose. Place the button near the existing share controls."
+          "description": "In the handlePublish function, add a top-level actor readiness guard that checks the actor instance is strictly non-null before assembling the InvitePayload or making any canister call. If the actor is null at this point, immediately abort the publish flow, display a clear inline error message to the user ('Backend connection unavailable — please wait a moment and try again'), and return early. This guard serves as a second line of defense in addition to the button-level guard in StepPublish.tsx."
+        }
+      ]
+    },
+    {
+      "id": "REQ-78",
+      "summary": "Audit all mutation hooks in useQueries.ts (useCreateInvite, useUpdateInvite) to ensure each mutation function receives the actor as a dependency, performs an explicit non-null assertion on the actor before any canister call, and returns a descriptive error object if the actor is null",
+      "acceptanceCriteria": [
+        "useCreateInvite and useUpdateInvite return a descriptive error (not an unhandled exception) when the actor is null.",
+        "The error message clearly states the actor is not yet initialized.",
+        "No TypeError or 'Cannot read properties of null' errors appear in the console when publishing.",
+        "Mutation hooks work correctly when the actor is properly initialized."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Audit all mutation hooks (useCreateInvite, useUpdateInvite, and any other hook that calls the actor). Ensure each mutation function: (1) receives the actor as a dependency that is watched reactively, (2) performs an explicit non-null assertion on the actor before any canister call, and (3) throws or returns a descriptive error object (e.g., { error: 'Actor not initialized' }) if the actor is null — rather than throwing a generic JS error or calling a null reference. This ensures the error propagates gracefully to the calling component."
         }
       ]
     }

@@ -1,151 +1,316 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useListSampleInvites } from '../hooks/useQueries';
-import AppLayout from '../components/layout/AppLayout';
-import SampleInviteCard from '../components/landing/SampleInviteCard';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useMyInvites } from '../hooks/useQueries';
+import { TEMPLATES } from '../lib/templateRegistry';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, Palette, Share2, ArrowRight, Star } from 'lucide-react';
-import DriftingPetals from '../components/effects/DriftingPetals';
+import {
+  Plus,
+  Edit3,
+  Users,
+  Calendar,
+  Sparkles,
+  LogIn,
+  Loader2,
+  FileText,
+  ChevronRight,
+} from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { data: samples, isLoading } = useListSampleInvites();
+  const { identity, login, loginStatus } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+  const isLoggingIn = loginStatus === 'logging-in';
 
-  return (
-    <AppLayout>
-      <div className="relative overflow-hidden">
-        <DriftingPetals count={12} colors={['#D4AF37', '#E8731A', '#C0392B', '#F4A832']} />
+  const { data: myInvites, isLoading: invitesLoading } = useMyInvites();
 
-        {/* Hero */}
-        <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 py-24 overflow-hidden">
-          {/* Background */}
-          <div
-            className="absolute inset-0 z-0"
-            style={{
-              background: 'radial-gradient(ellipse at 50% 40%, #5d1f2744 0%, transparent 70%), linear-gradient(160deg, #1a0005 0%, #3d0010 50%, #1a0005 100%)',
-            }}
-          />
-          <div
-            className="absolute inset-0 z-0 opacity-20"
-            style={{
-              backgroundImage: 'url(/assets/generated/mandala-divider.dim_1200x120.png)',
-              backgroundSize: '100% auto',
-              backgroundPosition: 'center 30%',
-              backgroundRepeat: 'no-repeat',
-            }}
-          />
+  const handleCreateNew = async () => {
+    if (!isAuthenticated) {
+      await login();
+    } else {
+      navigate({ to: '/create' });
+    }
+  };
 
-          <div className="relative z-10 max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/30 bg-gold/10 text-gold text-sm font-garamond mb-6">
-              <Star size={12} fill="currentColor" /> 8 Cinematic Templates · Free Forever
-            </div>
+  const getTemplateName = (templateId: string) => {
+    const t = TEMPLATES.find((t) => t.id === templateId);
+    return t?.name ?? templateId;
+  };
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-cormorant font-bold text-gold leading-tight mb-6">
-              Your Wedding,
-              <br />
-              <span className="text-ivory">Beautifully Told</span>
-            </h1>
-
-            <p className="text-lg md:text-xl font-garamond text-ivory/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Create stunning, cinematic Hindu wedding invitation websites in minutes.
-              Full-bleed designs, live countdowns, RSVP forms, and shareable URLs — all free, no login required.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+  // ─── DASHBOARD (logged in) ───────────────────────────────────────────────
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Dashboard Hero */}
+        <section className="relative py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-deepMaroon/5 via-background to-gold/5 pointer-events-none" />
+          <div className="max-w-6xl mx-auto relative">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+              <div>
+                <h1 className="font-cinzel text-3xl sm:text-4xl font-bold text-gold tracking-wide mb-1">
+                  My Invitations
+                </h1>
+                <p className="font-raleway text-foreground/60 text-sm tracking-wide">
+                  Manage your sacred wedding invitations
+                </p>
+              </div>
               <button
                 onClick={() => navigate({ to: '/create' })}
-                className="group inline-flex items-center gap-2 px-8 py-4 rounded-full font-cormorant font-bold text-lg text-deepMaroon transition-all hover:opacity-90 hover:scale-105 shadow-xl shadow-gold/20"
-                style={{ background: 'linear-gradient(135deg, #D4AF37, #F4A832)' }}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon font-semibold hover:opacity-90 transition-all font-raleway text-sm tracking-wide shadow-lg hover:shadow-gold/30 self-start sm:self-auto"
               >
-                <Sparkles size={18} /> Create Your Invitation
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <Plus className="w-4 h-4" />
+                Create New Invitation
               </button>
             </div>
-          </div>
 
-          {/* Bottom mandala */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-20 z-0 opacity-30"
-            style={{
-              backgroundImage: 'url(/assets/generated/mandala-divider.dim_1200x120.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              transform: 'scaleY(-1)',
-            }}
-          />
-        </section>
-
-        {/* How it works */}
-        <section className="py-20 px-6 bg-deepMaroon/50 border-y border-gold/10">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-gold mb-3">How It Works</h2>
-              <p className="font-garamond text-ivory/60">Three simple steps to your dream invitation</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { icon: <Palette size={32} />, step: '01', title: 'Choose Template', desc: 'Pick from 8 richly styled Hindu wedding templates with light & dark variants.' },
-                { icon: <Sparkles size={32} />, step: '02', title: 'Customize', desc: 'Add couple photos, events, gallery, music, and personalize every detail.' },
-                { icon: <Share2 size={32} />, step: '03', title: 'Share', desc: 'Get a unique URL and QR code. Share with guests instantly — no login needed.' },
-              ].map((item) => (
-                <div key={item.step} className="text-center group">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-deepMaroon transition-transform group-hover:scale-110"
-                    style={{ background: 'linear-gradient(135deg, #D4AF37, #F4A832)' }}
-                  >
-                    {item.icon}
+            {/* Invite Cards */}
+            {invitesLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-2xl border border-gold/10 bg-card p-6 space-y-4">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <div className="flex gap-3 pt-2">
+                      <Skeleton className="h-9 flex-1 rounded-full" />
+                      <Skeleton className="h-9 flex-1 rounded-full" />
+                    </div>
                   </div>
-                  <div className="text-gold/30 font-cormorant text-5xl font-bold mb-2">{item.step}</div>
-                  <h3 className="font-cormorant font-bold text-gold text-xl mb-2">{item.title}</h3>
-                  <p className="font-garamond text-ivory/60 text-sm leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Sample Invites */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-gold mb-3">Template Gallery</h2>
-              <p className="font-garamond text-ivory/60">Click any template to preview a sample invitation</p>
-            </div>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-[3/2] rounded-2xl bg-white/5" />
                 ))}
               </div>
+            ) : !myInvites || myInvites.length === 0 ? (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-20 h-20 rounded-full bg-gold/10 flex items-center justify-center mb-6">
+                  <FileText className="w-10 h-10 text-gold/40" />
+                </div>
+                <h2 className="font-cinzel text-xl font-semibold text-foreground/70 mb-2">
+                  No Invitations Yet
+                </h2>
+                <p className="font-raleway text-foreground/50 text-sm max-w-sm mb-8">
+                  Create your first beautiful wedding invitation and share it with your loved ones.
+                </p>
+                <button
+                  onClick={() => navigate({ to: '/create' })}
+                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon font-semibold hover:opacity-90 transition-all font-raleway text-sm tracking-wide shadow-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Your First Invitation
+                </button>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {(samples || []).map((invite) => (
-                  <SampleInviteCard key={invite.id} invite={invite} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myInvites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="group rounded-2xl border border-gold/15 bg-card hover:border-gold/30 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-gold/10 hover:shadow-lg"
+                  >
+                    {/* Card Header */}
+                    <div className="relative h-32 bg-gradient-to-br from-deepMaroon/20 via-crimson/10 to-gold/10 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 opacity-20">
+                        <div className="absolute top-2 right-2 text-4xl opacity-30">🪷</div>
+                        <div className="absolute bottom-2 left-2 text-3xl opacity-20">✨</div>
+                      </div>
+                      <div className="text-center relative z-10 px-4">
+                        <p className="font-cinzel text-lg font-bold text-gold leading-tight line-clamp-2">
+                          {invite.coupleNames}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 text-foreground/50 text-xs font-raleway mb-1">
+                        <Calendar className="w-3.5 h-3.5 text-gold/50" />
+                        <span>{invite.weddingDate}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-foreground/40 text-xs font-raleway mb-4">
+                        <Sparkles className="w-3.5 h-3.5 text-gold/40" />
+                        <span>{getTemplateName(invite.templateId)}</span>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            navigate({ to: '/create', search: { editId: invite.id } })
+                          }
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border border-gold/25 text-gold/80 hover:bg-gold/10 hover:border-gold/40 hover:text-gold transition-all font-raleway text-xs tracking-wide"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate({ to: `/invite/${invite.id}/responses` })
+                          }
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-gold/10 border border-gold/25 text-gold hover:bg-gold/20 hover:border-gold/40 transition-all font-raleway text-xs tracking-wide"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          RSVPs
+                        </button>
+                      </div>
+
+                      {/* View Invite Link */}
+                      <button
+                        onClick={() => navigate({ to: `/invite/${invite.id}` })}
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-foreground/40 hover:text-gold/70 transition-all font-raleway text-xs tracking-wide"
+                      >
+                        View Invitation
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         </section>
+      </div>
+    );
+  }
 
-        {/* CTA */}
-        <section className="py-20 px-6 text-center border-t border-gold/10">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-gold mb-4">
-              Ready to Create Your Invitation?
-            </h2>
-            <p className="font-garamond text-ivory/60 mb-8">
-              Free forever. No watermarks. No login. Just beautiful invitations.
-            </p>
+  // ─── MARKETING LANDING PAGE (logged out) ────────────────────────────────
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-deepMaroon/10 via-background to-gold/5 pointer-events-none" />
+        <div className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, oklch(0.75 0.15 60) 0%, transparent 50%), radial-gradient(circle at 80% 20%, oklch(0.65 0.18 30) 0%, transparent 50%)' }}
+        />
+
+        <div className="relative z-10 text-center max-w-4xl mx-auto">
+          <div className="mb-6 flex justify-center">
+            <span className="text-6xl sm:text-7xl animate-float">🪷</span>
+          </div>
+          <h1 className="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-bold text-gold tracking-widest mb-4 leading-tight">
+            Vivah
+          </h1>
+          <p className="font-cormorant text-xl sm:text-2xl text-foreground/70 italic mb-3 tracking-wide">
+            Sacred Wedding Invitations
+          </p>
+          <p className="font-raleway text-base sm:text-lg text-foreground/50 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Craft breathtaking digital wedding invitations inspired by India's rich cultural heritage.
+            Share your love story with elegance and grace.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate({ to: '/create' })}
-              className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-cormorant font-bold text-xl text-deepMaroon transition-all hover:opacity-90 hover:scale-105 shadow-xl shadow-gold/20"
-              style={{ background: 'linear-gradient(135deg, #D4AF37, #F4A832)' }}
+              onClick={handleCreateNew}
+              disabled={isLoggingIn}
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon font-bold hover:opacity-90 transition-all font-raleway text-base tracking-wide shadow-xl hover:shadow-gold/40 disabled:opacity-60"
             >
-              <Sparkles size={20} /> Start Creating Now
+              {isLoggingIn ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Sparkles className="w-5 h-5" />
+              )}
+              {isLoggingIn ? 'Signing in...' : 'Create Your Invitation'}
+            </button>
+            <button
+              onClick={handleCreateNew}
+              disabled={isLoggingIn}
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/50 transition-all font-raleway text-base tracking-wide"
+            >
+              <LogIn className="w-5 h-5" />
+              Sign In
             </button>
           </div>
-        </section>
-      </div>
-    </AppLayout>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-deepMaroon/3">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-cinzel text-3xl sm:text-4xl font-bold text-gold text-center tracking-wide mb-3">
+            How It Works
+          </h2>
+          <p className="font-raleway text-foreground/50 text-center mb-14 tracking-wide">
+            Three simple steps to your perfect invitation
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {[
+              {
+                icon: '✨',
+                step: '01',
+                title: 'Choose a Template',
+                desc: 'Select from our curated collection of premium Indian wedding templates.',
+              },
+              {
+                icon: '🖊️',
+                step: '02',
+                title: 'Personalize',
+                desc: 'Add your couple photos, event details, and customize every element.',
+              },
+              {
+                icon: '💌',
+                step: '03',
+                title: 'Share & Celebrate',
+                desc: 'Share your invitation link with guests and track RSVPs in real time.',
+              },
+            ].map((item) => (
+              <div key={item.step} className="text-center group">
+                <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-gold/15 transition-colors text-2xl">
+                  {item.icon}
+                </div>
+                <div className="font-cinzel text-xs text-gold/40 tracking-widest mb-2">{item.step}</div>
+                <h3 className="font-cinzel text-lg font-semibold text-foreground/80 mb-2">{item.title}</h3>
+                <p className="font-raleway text-sm text-foreground/50 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Template Gallery */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="font-cinzel text-3xl sm:text-4xl font-bold text-gold text-center tracking-wide mb-3">
+            Premium Templates
+          </h2>
+          <p className="font-raleway text-foreground/50 text-center mb-14 tracking-wide">
+            Inspired by India's timeless wedding traditions
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {TEMPLATES.map((template) => (
+              <div
+                key={template.id}
+                onClick={handleCreateNew}
+                className="group cursor-pointer rounded-xl overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10"
+              >
+                <div className="relative aspect-[4/3] bg-deepMaroon/10 overflow-hidden">
+                  <img
+                    src={template.thumbnail}
+                    alt={template.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {(template as { premium?: boolean }).premium && (
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon text-xs font-bold font-raleway tracking-wide shadow-md">
+                      Premium
+                    </div>
+                  )}
+                </div>
+                <div className="p-3 bg-card">
+                  <p className="font-cinzel text-xs font-semibold text-foreground/70 tracking-wide truncate">
+                    {template.name}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleCreateNew}
+              disabled={isLoggingIn}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon font-bold hover:opacity-90 transition-all font-raleway text-base tracking-wide shadow-xl hover:shadow-gold/40 disabled:opacity-60"
+            >
+              {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+              {isLoggingIn ? 'Signing in...' : 'Start Creating — It\'s Free'}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

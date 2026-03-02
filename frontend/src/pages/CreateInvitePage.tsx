@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import AppLayout from '../components/layout/AppLayout';
 import StepTemplateSelector from '../components/creator/StepTemplateSelector';
 import StepCoupleDetails from '../components/creator/StepCoupleDetails';
@@ -7,11 +7,13 @@ import StepPhotoUpload from '../components/creator/StepPhotoUpload';
 import StepEvents from '../components/creator/StepEvents';
 import StepGalleryMusic, { type GalleryItem } from '../components/creator/StepGalleryMusic';
 import StepPublish from '../components/creator/StepPublish';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Lock, LogIn, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '../lib/utils';
 import { ExternalBlob } from '../backend';
 import type { InvitePayload, ScheduleItem } from '../backend';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGetInvite } from '../hooks/useQueries';
 
 interface CoupleDetails {
   brideName: string;
@@ -46,9 +48,19 @@ const EMPTY_BLOB = ExternalBlob.fromURL('');
 
 export default function CreateInvitePage() {
   const navigate = useNavigate();
+  const { identity, login, loginStatus } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+  const isLoggingIn = loginStatus === 'logging-in';
+
+  // Read optional editId from URL search params
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const search = useSearch({ from: '/create' }) as any;
+  const editId: string | undefined = search?.editId;
+
   const [step, setStep] = useState(0);
   const [publishedId, setPublishedId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     templateId: 'royal-rajasthani',
@@ -61,6 +73,106 @@ export default function CreateInvitePage() {
     galleryItems: [],
     musicUrl: '',
   });
+
+  // Fetch existing invite when editing
+  const { data: existingInvite, isLoading: isLoadingInvite } = useGetInvite(editId ?? '');
+
+  // Pre-populate form state from fetched invite data
+  useEffect(() => {
+    if (!editId) return;
+    if (dataLoaded) return;
+    if (isLoadingInvite) return;
+    if (!existingInvite) return;
+
+    // Parse couple names — stored as "Bride & Groom"
+    const parts = existingInvite.coupleNames.split(' & ');
+    const brideName = parts[0]?.trim() ?? '';
+    const groomName = parts[1]?.trim() ?? '';
+
+    // Extract tagline from customTextFields
+    const customFields: Record<string, string> = Object.fromEntries(existingInvite.customTextFields);
+    const tagline = customFields['tagline'] ?? '';
+
+    // Gallery items — wrap existing ExternalBlobs into GalleryItem shape
+    const loadedGallery: GalleryItem[] = existingInvite.galleryImages.map((blob) => ({
+      blob,
+      previewUrl: blob.getDirectURL(),
+      uploading: false,
+      progress: 100,
+    }));
+
+    setForm({
+      templateId: existingInvite.templateId,
+      themeVariant: (existingInvite.themeVariant as 'light' | 'dark') || 'light',
+      couple: {
+        brideName,
+        groomName,
+        weddingDate: existingInvite.weddingDate,
+        tagline,
+      },
+      bridePhoto: existingInvite.bridePhoto,
+      groomPhoto: existingInvite.groomPhoto,
+      coverPhoto: existingInvite.coverPhoto,
+      events: existingInvite.events,
+      galleryItems: loadedGallery,
+      musicUrl: existingInvite.backgroundMusic ?? '',
+    });
+
+    setDataLoaded(true);
+  }, [editId, existingInvite, isLoadingInvite, dataLoaded]);
+
+  // ─── AUTH GUARD ──────────────────────────────────────────────────────────
+  if (!isAuthenticated) {
+    return (
+      <AppLayout>
+        <div className="min-h-[80vh] flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-gold/50" />
+            </div>
+            <h2 className="font-cinzel text-2xl font-bold text-gold mb-3 tracking-wide">
+              Sign In Required
+            </h2>
+            <p className="font-raleway text-foreground/60 text-sm leading-relaxed mb-8">
+              Please sign in to create or edit wedding invitations. Your invitations will be saved to your account.
+            </p>
+            <button
+              onClick={() => login()}
+              disabled={isLoggingIn}
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-gradient-to-r from-gold to-saffron text-deepMaroon font-semibold hover:opacity-90 transition-all font-raleway text-sm tracking-wide shadow-lg disabled:opacity-60 mx-auto"
+            >
+              {isLoggingIn ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LogIn className="w-4 h-4" />
+              )}
+              {isLoggingIn ? 'Signing in...' : 'Sign In to Continue'}
+            </button>
+            <button
+              onClick={() => navigate({ to: '/' })}
+              className="mt-4 font-raleway text-sm text-foreground/40 hover:text-foreground/60 transition-colors block mx-auto"
+            >
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // ─── LOADING EXISTING INVITE ─────────────────────────────────────────────
+  if (editId && isLoadingInvite && !dataLoaded) {
+    return (
+      <AppLayout>
+        <div className="min-h-[80vh] flex items-center justify-center px-4">
+          <div className="text-center">
+            <Loader2 className="w-10 h-10 text-gold animate-spin mx-auto mb-4" />
+            <p className="font-raleway text-foreground/60 text-sm">Loading your invitation...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {};
@@ -81,7 +193,6 @@ export default function CreateInvitePage() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const buildPayload = (): InvitePayload => {
-    // Only include gallery items that have finished uploading
     const readyGalleryBlobs = form.galleryItems
       .filter((item) => !item.uploading)
       .map((item) => item.blob);
@@ -202,6 +313,18 @@ export default function CreateInvitePage() {
               >
                 {step === 4 ? 'Review & Publish' : 'Continue'}
                 <ChevronRight size={16} className="ml-1" />
+              </Button>
+            </div>
+          )}
+
+          {publishedId && step === 5 && (
+            <div className="mt-6 text-center">
+              <Button
+                onClick={() => navigate({ to: '/' })}
+                variant="ghost"
+                className="text-gold/60 hover:text-gold font-garamond"
+              >
+                ← Back to My Invitations
               </Button>
             </div>
           )}

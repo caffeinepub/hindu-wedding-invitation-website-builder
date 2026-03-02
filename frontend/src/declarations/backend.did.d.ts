@@ -10,7 +10,14 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type CreateInviteResult = { 'ok' : string } |
+  { 'error' : string };
 export type ExternalBlob = Uint8Array;
+export interface InviteCode {
+  'created' : Time,
+  'code' : string,
+  'used' : boolean,
+}
 export interface InvitePayload {
   'galleryImages' : Array<ExternalBlob>,
   'weddingDate' : string,
@@ -38,10 +45,17 @@ export interface InviteRecord {
   'isSample' : boolean,
   'coverPhoto' : ExternalBlob,
   'events' : Array<ScheduleItem>,
+  'creatorPrincipal' : Principal,
   'coupleNames' : string,
   'backgroundMusic' : string,
   'rsvpResponses' : Array<RSVPRecord>,
   'bridePhoto' : ExternalBlob,
+}
+export interface RSVP {
+  'name' : string,
+  'inviteCode' : string,
+  'timestamp' : Time,
+  'attending' : boolean,
 }
 export interface RSVPRecord {
   'name' : string,
@@ -60,6 +74,13 @@ export interface SectionConfig {
   'customTitle' : string,
   'customText' : string,
 }
+export type Time = bigint;
+export type UpdateInviteResult = { 'ok' : null } |
+  { 'error' : string };
+export interface UserProfile { 'name' : string, 'email' : string }
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -87,11 +108,24 @@ export interface _SERVICE {
     _CaffeineStorageRefillResult
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
-  'createInvite' : ActorMethod<[string, InvitePayload], string>,
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createInvite' : ActorMethod<[string, InvitePayload], CreateInviteResult>,
+  'generateInviteCode' : ActorMethod<[], string>,
+  'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getInvite' : ActorMethod<[string], [] | [InviteRecord]>,
-  'listSampleInvites' : ActorMethod<[], Array<InviteRecord>>,
-  'submitRSVP' : ActorMethod<[string, RSVPRecord], undefined>,
-  'updateInvite' : ActorMethod<[string, InvitePayload], undefined>,
+  'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
+  'getInviteCreator' : ActorMethod<[string], [] | [Principal]>,
+  'getMyInvites' : ActorMethod<[], Array<InviteRecord>>,
+  'getRSVPResponses' : ActorMethod<[string], Array<RSVPRecord>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'submitInviteRSVP' : ActorMethod<[string, RSVPRecord], undefined>,
+  'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
+  'updateInvite' : ActorMethod<[string, InvitePayload], UpdateInviteResult>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -23,6 +23,7 @@ interface BaseTemplateProps extends TemplateProps {
   children?: ReactNode;
   sectionBg?: string;
   textColor?: string;
+  rsvpBackground?: string;
 }
 
 function getBlobUrl(blob: ExternalBlob | string | null | undefined, fallback: string): string {
@@ -90,17 +91,14 @@ export default function BaseTemplate({
   children,
   sectionBg,
   textColor,
+  rsvpBackground,
 }: BaseTemplateProps) {
   const isDark = variant === 'dark';
   const textClass = textColor || (isDark ? 'text-white' : 'text-[#2a0a00]');
   const sectionStyle: React.CSSProperties = sectionBg ? { background: sectionBg } : {};
 
-  const getCustomText = (key: string, fallback: string) => {
-    const entry = invite.customTextFields?.find(([k]) => k === key);
-    return entry ? entry[1] : fallback;
-  };
-
-  const thankYouText = getCustomText('thankYouText', 'Your RSVP has been received. We look forward to celebrating with you!');
+  // Suppress unused warning — secondaryColor may be used by child templates
+  void secondaryColor;
 
   const bridePhotoUrl = getBlobUrl(
     invite.bridePhoto,
@@ -111,7 +109,6 @@ export default function BaseTemplate({
     '/assets/generated/placeholder-groom.dim_600x800.png'
   );
 
-  // Use placeholder if the URL is a sample placeholder
   const bridePhoto = bridePhotoUrl.includes('xoko') || !bridePhotoUrl
     ? '/assets/generated/placeholder-bride.dim_600x800.png'
     : bridePhotoUrl;
@@ -120,17 +117,18 @@ export default function BaseTemplate({
     ? '/assets/generated/placeholder-groom.dim_600x800.png'
     : groomPhotoUrl;
 
-  // Show background music if it's a data URL (base64) or an http URL
   const musicSrc = invite.backgroundMusic && (
     invite.backgroundMusic.startsWith('data:') || invite.backgroundMusic.startsWith('http')
   ) ? invite.backgroundMusic : null;
 
   const galleryImages = (invite.galleryImages || []).filter(isValidGalleryBlob);
 
-  // Build the invitation URL for sharing
-  const inviteUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/invite/${invite.id}`
-    : `/invite/${invite.id}`;
+  // RSVP section background: use provided rsvpBackground or fall back to a semi-transparent overlay
+  const rsvpSectionStyle: React.CSSProperties = rsvpBackground
+    ? { background: rsvpBackground }
+    : sectionBg
+      ? { background: sectionBg }
+      : {};
 
   return (
     <div className={`min-h-screen w-full ${textClass}`} style={bodyStyle}>
@@ -139,11 +137,9 @@ export default function BaseTemplate({
         <BackgroundMusic musicUrl={musicSrc} accentColor={accentColor} />
       )}
 
-      {/* Hero — renders immediately, no deferral */}
+      {/* Hero */}
       <MouseTiltHero className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" style={heroStyle}>
-        {/* Mandala divider top */}
-        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10"
-          style={{ backgroundImage: 'url(/assets/generated/mandala-divider.dim_1200x120.png)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.4 }} />
+        {children}
 
         <div className="relative z-20 text-center px-6 py-20">
           <p className="text-sm uppercase tracking-[0.4em] mb-4 font-garamond opacity-70" style={{ color: accentColor }}>
@@ -156,21 +152,15 @@ export default function BaseTemplate({
           <p className="text-lg md:text-xl font-garamond opacity-80 mb-8">
             {invite.weddingDate ? new Date(invite.weddingDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}
           </p>
-
-          {/* Countdown */}
           {invite.weddingDate && (
             <div className="mt-6">
               <CountdownTimer weddingDate={invite.weddingDate} accentColor={accentColor} />
             </div>
           )}
         </div>
-
-        {/* Bottom mandala */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none z-10"
-          style={{ backgroundImage: 'url(/assets/generated/mandala-divider.dim_1200x120.png)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.4, transform: 'scaleY(-1)' }} />
       </MouseTiltHero>
 
-      {/* Couple Photos — renders immediately as it's above the fold */}
+      {/* Couple Photos */}
       <section className="py-20 px-6" style={sectionStyle}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -205,9 +195,7 @@ export default function BaseTemplate({
         </div>
       </section>
 
-      {children}
-
-      {/* Events — deferred until near viewport */}
+      {/* Events */}
       {invite.events && invite.events.length > 0 && (
         <DeferredSection>
           <section className="py-20 px-6" style={sectionStyle}>
@@ -222,7 +210,7 @@ export default function BaseTemplate({
         </DeferredSection>
       )}
 
-      {/* Gallery — deferred until near viewport */}
+      {/* Gallery */}
       {galleryImages.length > 0 && (
         <DeferredSection>
           <section className="py-20 px-6" style={sectionStyle}>
@@ -253,21 +241,21 @@ export default function BaseTemplate({
         </DeferredSection>
       )}
 
-      {/* RSVP — deferred until near viewport */}
+      {/* RSVP */}
       <DeferredSection>
-        <section className="py-20 px-6" style={sectionStyle}>
+        <section className="py-20 px-6" style={rsvpSectionStyle}>
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>RSVP</h2>
               <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
-              <p className="mt-4 font-garamond opacity-70">Kindly respond by the wedding date</p>
+              <p className="mt-4 font-garamond opacity-70" style={{ color: rsvpBackground ? '#f5e6c8' : undefined }}>Kindly respond by the wedding date</p>
             </div>
-            <RSVPForm inviteId={invite.id} thankYouText={thankYouText} accentColor={accentColor} dark={isDark} />
+            <RSVPForm inviteId={invite.id} coupleNames={invite.coupleNames} />
           </div>
         </section>
       </DeferredSection>
 
-      {/* Share Section — deferred until near viewport */}
+      {/* Share Section */}
       <DeferredSection>
         <section className="py-16 px-6" style={sectionStyle}>
           <div className="max-w-md mx-auto">
@@ -277,8 +265,7 @@ export default function BaseTemplate({
               <p className="mt-4 font-garamond opacity-70 text-sm">Spread the love — share this invitation</p>
             </div>
             <ShareSection
-              url={inviteUrl}
-              accentColor={accentColor}
+              inviteId={invite.id}
               coupleNames={invite.coupleNames}
               weddingDate={invite.weddingDate}
             />

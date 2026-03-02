@@ -1,19 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { InvitePayload, RSVPRecord, InviteRecord } from '../backend';
-
-export function useListSampleInvites() {
-  const { actor, isFetching } = useActor();
-  return useQuery<InviteRecord[]>({
-    queryKey: ['sampleInvites'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.listSampleInvites();
-    },
-    enabled: !!actor && !isFetching,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
+import { useInternetIdentity } from './useInternetIdentity';
+import type { InviteRecord, InvitePayload, RSVPRecord } from '../backend';
 
 export function useGetInvite(id: string) {
   const { actor, isFetching } = useActor();
@@ -21,12 +9,41 @@ export function useGetInvite(id: string) {
     queryKey: ['invite', id],
     queryFn: async () => {
       if (!actor) return null;
-      const result = await actor.getInvite(id);
-      return result ?? null;
+      return actor.getInvite(id);
     },
-    enabled: !!actor && !isFetching && !!id,
-    staleTime: 60 * 1000, // 60 seconds — repeat visits use cached data
-    gcTime: 5 * 60 * 1000, // keep in cache for 5 minutes
+    enabled: !!actor && !isFetching,
+    staleTime: 60000,
+  });
+}
+
+export function useMyInvites() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+
+  return useQuery<InviteRecord[]>({
+    queryKey: ['myInvites', identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyInvites();
+    },
+    enabled: !!actor && !isFetching && isAuthenticated,
+    staleTime: 30000,
+  });
+}
+
+export function useInviteCreator(inviteId: string) {
+  const { actor, isFetching } = useActor();
+  return useQuery<string | null>({
+    queryKey: ['inviteCreator', inviteId],
+    queryFn: async () => {
+      if (!actor || !inviteId) return null;
+      const result = await actor.getInviteCreator(inviteId);
+      if (result === null) return null;
+      return result.toString();
+    },
+    enabled: !!actor && !isFetching && !!inviteId,
+    staleTime: 60000,
   });
 }
 
@@ -35,11 +52,15 @@ export function useCreateInvite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: InvitePayload }) => {
-      if (!actor) throw new Error('Actor not ready');
-      return actor.createInvite(id, payload);
+      if (!actor) {
+        throw new Error('Backend connection is not ready yet. Please wait a moment and try again.');
+      }
+      const result = await actor.createInvite(id, payload);
+      if (result.__kind__ === 'error') throw new Error(result.error);
+      return result.ok;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sampleInvites'] });
+      queryClient.invalidateQueries({ queryKey: ['myInvites'] });
     },
   });
 }
@@ -49,11 +70,16 @@ export function useUpdateInvite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: InvitePayload }) => {
-      if (!actor) throw new Error('Actor not ready');
-      return actor.updateInvite(id, payload);
+      if (!actor) {
+        throw new Error('Backend connection is not ready yet. Please wait a moment and try again.');
+      }
+      const result = await actor.updateInvite(id, payload);
+      if (result.__kind__ === 'error') throw new Error(result.error);
+      return result.ok;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['invite', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['myInvites'] });
     },
   });
 }
@@ -63,11 +89,31 @@ export function useSubmitRSVP() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, rsvp }: { id: string; rsvp: RSVPRecord }) => {
-      if (!actor) throw new Error('Actor not ready');
-      return actor.submitRSVP(id, rsvp);
+      if (!actor) {
+        throw new Error('Backend connection is not ready yet. Please wait a moment and try again.');
+      }
+      return actor.submitInviteRSVP(id, rsvp);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['invite', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['rsvpResponses', variables.id] });
     },
+  });
+}
+
+export function useRSVPResponses(inviteId: string) {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
+
+  return useQuery<RSVPRecord[]>({
+    queryKey: ['rsvpResponses', inviteId],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getRSVPResponses(inviteId);
+    },
+    enabled: !!actor && !isFetching && isAuthenticated && !!inviteId,
+    staleTime: 30000,
+    retry: false,
   });
 }
