@@ -1,15 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Fix HTTP 413 "payload too large" errors when publishing wedding invites with photos by implementing a chunked image upload system.
+**Goal:** Replace the overlapping filigree frame overlay on bride/groom photos with a premium CSS border, and add a WhatsApp sharing button to the invitation page.
 
 **Planned changes:**
-- Add `uploadImageChunk(inviteId, fieldKey, chunkIndex, totalChunks, chunkData)` endpoint to the Motoko backend that accepts image data in chunks (≤1MB each)
-- Add `finalizeImage(inviteId, fieldKey)` endpoint to the Motoko backend that reassembles chunks in order and stores the complete image in the invite record
-- Remove raw Base64 image data from `createInvite` and `updateInvite` payloads in the backend
-- Update `StepPhotoUpload.tsx` to split image Base64 data into ≤1MB chunks, upload sequentially via `uploadImageChunk`, then call `finalizeImage`, storing only a field reference in form state
-- Update `StepGalleryMusic.tsx` to use the same chunked upload flow for gallery images
-- Update `CreateInvitePage` to omit raw image data from the final `createInvite`/`updateInvite` payload
-- Show per-image upload progress UI during chunk transmission
+- In `FloatingPhotoFrame.tsx` and `BaseTemplate.tsx`, remove the SVG filigree/overlay element that renders on top of or across the photo area
+- Add a premium multi-layered CSS border around the photo container (gold/saffron tones, subtle inset shadow and outer glow, slightly rounded or ornate corners) so the photo is fully visible at all times
+- Retain the existing 3D floating/bobbing animation and reduce-motion toggle on the photo frame container
+- Add a WhatsApp sharing button to the published invitation page (`/invite/:id`), placed near the existing share/QR section
+- The WhatsApp button opens `https://wa.me/?text=<encoded message>` in a new tab, with a message containing the couple names, wedding date, and full invitation URL
+- Style the WhatsApp button with gold/saffron accents and matching typography (Cormorant Garamond or Cinzel), responsive for mobile and desktop
 
-**User-visible outcome:** Users can upload and publish wedding invites with multiple photos without encountering HTTP 413 errors. Photos still display correctly on the published invite page, and a progress indicator is shown during each image upload.
+**User-visible outcome:** Bride and groom photos are fully visible with a premium gold border frame (no overlapping overlay), and visitors on any published invitation page can share it directly via WhatsApp with one click.

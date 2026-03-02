@@ -1,44 +1,49 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix HTTP 413 payload too large error on invite publish",
+  "title": "Replace photo frame overlay with premium border and add WhatsApp sharing button",
   "requirements": [
     {
-      "id": "REQ-20",
-      "summary": "Update frontend photo upload flow to use blob-storage component's chunked upload instead of embedding Base64 data inline, eliminating HTTP 413 errors when publishing invites with photos",
+      "id": "REQ-25",
+      "summary": "Remove overlapping SVG filigree frame from bride/groom photos and replace with premium CSS border styling",
       "acceptanceCriteria": [
-        "Selecting and uploading a bride, groom, or cover photo triggers chunked upload calls to the backend and finalizes the image before the user proceeds.",
-        "Gallery image uploads also use chunked upload, with per-image progress indication.",
-        "The publish payload sent via createInvite/updateInvite no longer contains raw Base64 image strings.",
-        "Publishing an invite with multiple photos no longer returns an HTTP 413 error.",
-        "Published /invite/:id pages still display all uploaded photos correctly after the chunked upload approach.",
-        "Upload progress UI is shown per image during chunk transmission."
+        "No SVG filigree or overlay element renders on top of or across the bride/groom photo area.",
+        "The photo is fully visible without any element covering any portion of the image.",
+        "A premium-looking border/boundary is visible around the outside edge of each photo container.",
+        "The border uses gold/saffron tones consistent with the app's Hindu wedding theme.",
+        "The border styling looks premium across all 8 templates in both light and dark variants.",
+        "The floating 3D bobbing animation on the photo frame container is still present and functional.",
+        "The reduce-motion toggle still disables the bobbing animation when enabled."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/creator/StepPhotoUpload.tsx",
+          "path": "frontend/src/components/effects/FloatingPhotoFrame.tsx",
           "operation": "modify",
-          "description": "Replace Base64 file conversion with ExternalBlob.fromBytes() from the blob-storage component. When a user selects a bride, groom, or cover photo, convert the File to Uint8Array, create an ExternalBlob instance with withUploadProgress() to track upload percentage, and store the ExternalBlob reference in form state instead of the Base64 string. Display a progress indicator during upload. Verify the blob-storage component's usage instructions before implementing."
+          "description": "Remove the filigree frame overlay image (frontend/public/assets/generated/filigree-frame.dim_600x800.png) that renders on top of the bride/groom photos. Replace the overlaid frame with a premium multi-layered CSS border applied directly to the photo container using a combination of border, box-shadow, and outline properties. Style the border with gold/saffron tones (using theme colors from the app's palette), rounded corners via border-radius, and subtle inset/outer glow effects. Preserve the existing floating 3D bobbing animation logic and reduced-motion detection. Ensure the photo image is always fully visible without any overlapping decorative elements."
         },
         {
-          "path": "frontend/src/components/creator/StepGalleryMusic.tsx",
+          "path": "frontend/src/components/templates/BaseTemplate.tsx",
           "operation": "modify",
-          "description": "Replace Base64 file conversion with ExternalBlob.fromBytes() from the blob-storage component for gallery image uploads. For each selected gallery image, convert to Uint8Array, create an ExternalBlob with withUploadProgress(), track per-image upload progress, and store ExternalBlob references in the gallery array instead of Base64 strings. Display progress indicators for each uploading image. Verify the blob-storage component's usage instructions before implementing."
-        },
+          "description": "Update the couple photos section where FloatingPhotoFrame is used to ensure the new premium CSS border styling is consistent across all template variants. Verify that the border styling works correctly in both light and dark theme modes. If there are any hardcoded frame-related styles or wrapper elements specific to the old overlay approach, remove or adjust them to support the new border-only design. Ensure the floating animation remains functional and that the reduce-motion preference is respected."
+        }
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "summary": "Add WhatsApp sharing button to invitation page with couple names, wedding date, and invitation URL",
+      "acceptanceCriteria": [
+        "A WhatsApp sharing button is visible on every published invitation page at /invite/:id.",
+        "Clicking the button opens a new browser tab with a wa.me share URL.",
+        "The WhatsApp share message includes the couple names, wedding date, and the full invitation URL.",
+        "The button is styled consistently with the app's premium Hindu wedding theme (gold accents, matching typography).",
+        "The button is responsive and visible on both mobile and desktop viewports.",
+        "The WhatsApp icon or label clearly identifies the button as a WhatsApp share action."
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/pages/CreateInvitePage.tsx",
+          "path": "frontend/src/components/invitation/ShareSection.tsx",
           "operation": "modify",
-          "description": "Update the payload assembly logic in the publish step to pass ExternalBlob instances directly in the InvitePayload for bridePhoto, groomPhoto, coverPhoto, and galleryImages fields. Remove any Base64 string serialization logic. The blob-storage component handles the chunked upload automatically when ExternalBlob instances are sent to the backend."
-        },
-        {
-          "path": "frontend/src/backend.d.ts",
-          "operation": "modify",
-          "description": "Verify that the InvitePayload and InviteRecord type definitions already use ExternalBlob for image fields (bridePhoto, groomPhoto, coverPhoto, galleryImages). Update the types if they currently reference string or other types to ensure type safety when passing ExternalBlob instances."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Review the createInvite and updateInvite mutation hooks to ensure they correctly serialize ExternalBlob instances when calling the backend. The blob-storage component's ExternalBlob class handles chunked upload internally, so no manual chunking logic is needed. Ensure proper error handling for upload failures."
+          "description": "Add a WhatsApp sharing button alongside the existing QR code and copyable URL. When clicked, the button should construct a WhatsApp share URL in the format https://wa.me/?text=<encoded message> where the message includes the couple names (from invite.coupleNames), the formatted wedding date (using the existing date formatting utility from lib/utils.ts), and the full invitation URL (window.location.href or constructed from the invite ID). Open the WhatsApp URL in a new browser tab using window.open or target=\"_blank\". Style the button to match the app's premium theme using gold/saffron accents, Cormorant Garamond or Cinzel typography, and ensure it is responsive. Use a recognizable WhatsApp icon (either an SVG or a Unicode symbol) to clearly identify the button's purpose. Place the button near the existing share controls."
         }
       ]
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
+  "projectStateVersion": 11,
   "summary": "Hindu Wedding Invitation Website Builder — a full-stack web app where users anonymously create cinematic, full-page Hindu wedding invitation websites. Features 8 richly styled templates (Royal Rajasthani, Temple Mandala, Dark Cosmic, Floral Marigold, South Indian Bronze, Minimal Sanskrit, Sunset Beach, 3D Floating Divine) with light/dark variants. Separate bride/groom photo uploads, gallery multi-upload with drag & drop, background music upload, live countdown timer, animated events timeline, RSVP form with confetti burst, shareable unique URLs, QR code generation, OG meta tags with cache-busting, WYSIWYG text editing, and full cinematic visual effects (floating frames, parallax, mandala reveals, drifting petals, glassmorphism).",
   "architectural_notes": [
     "Anonymous invite creation — no login required; invites accessed only via unique URL",
@@ -10,7 +10,10 @@
     "IC canister message size limit is ~2MB (2,097,152 bytes); Base64-encoded images sent inline in createInvite/updateInvite payloads exceed this limit and cause HTTP 413 errors. Images must be chunked, compressed before Base64 encoding, or stored/referenced externally rather than embedded inline in the canister call payload."
   ],
   "known_issues": [
-    "Publishing invite fails with HTTP 413 (payload too large: 2.7MB > 2MB IC limit) when Base64-encoded photos are included inline in the canister message"
+    "Publishing invite fails with HTTP 413 (payload too large: 2.7MB > 2MB IC limit) when Base64-encoded photos are included inline in the canister message",
+    "Background music does not autoplay when invitation page is opened",
+    "Publishing an invite and opening the invitation page are both slow (performance issue)",
+    "Bride/groom photo frame overlaps/shows in the middle of the photo instead of acting as a border around it"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -141,6 +144,54 @@
         "REQ-20"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-bride-and-groom-photos-being-hidden-behind-the-decorative-filigree-frame-overlay-in-floatingphotoframe-tsx-and-basetemplate-tsx-the-photo-image-must-render-visibly-inside-the-frame-at-full-size-ensure-the-frame-overlay-svg-filigree-or-border-element-is-positioned-on-top-of-the-photo-using-z-index-layering-photo-at-z-index-base-frame-overlay-above-and-that-the-photo-container-does-not-have-overflow-hidden-or-opacity-visibility-rules-that-clip-or-obscure-the-photo-the-photo-must-be-clearly-visible-with-the-decorative-frame-appearing-as-a-border-around-it-not-covering-it",
+      "title": "Fix bride and groom photos being hidden behind the decorative filigree frame overlay in FloatingPhotoFrame.tsx and BaseTemplate.tsx. The photo image must render visibly inside the frame at full size — ensure the frame overlay (SVG filigree or border element) is positioned on top of the photo using z-index layering (photo at z-index base, frame overlay above), and that the photo container does not have overflow:hidden or opacity/visibility rules that clip or obscure the photo. The photo must be clearly visible with the decorative frame appearing as a border around it, not covering it.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-backgroundmusic-tsx-to-autoplay-the-background-music-as-soon-as-the-invitation-page-is-opened-remove-the-requirement-for-a-separate-first-click-anywhere-interaction-before-playback-starts-instead-attempt-to-call-audio-play-immediately-on-mount-using-a-useeffect-if-the-browser-blocks-autoplay-promise-rejection-fall-back-to-playing-on-the-first-user-interaction-click-tap-anywhere-on-the-page-the-floating-play-pause-button-must-remain-visible-and-functional-loop-the-audio-continuously-respect-the-reduce-motion-toggle-for-button-animation-only",
+      "title": "Update BackgroundMusic.tsx to autoplay the background music as soon as the invitation page is opened. Remove the requirement for a separate first-click-anywhere interaction before playback starts. Instead, attempt to call audio.play() immediately on mount using a useEffect. If the browser blocks autoplay (promise rejection), fall back to playing on the first user interaction (click/tap anywhere on the page). The floating play/pause button must remain visible and functional. Loop the audio continuously. Respect the reduce-motion toggle for button animation only.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-optimize-the-invite-publishing-flow-to-reduce-the-time-taken-when-the-user-clicks-publish-in-the-creator-flow-specifically-1-in-the-backend-main-mo-ensure-finalizeimage-chunk-assembly-is-o-n-and-does-not-perform-redundant-iterations-2-in-the-frontend-createinvitepage-tsx-and-stepphotoupload-tsx-stepgallerymusic-tsx-parallelize-independent-chunked-upload-calls-where-possible-upload-bride-photo-chunks-and-groom-photo-chunks-concurrently-rather-than-sequentially-3-show-a-meaningful-per-step-progress-indicator-during-publishing-so-the-user-understands-the-app-is-working-4-after-createinvite-updateinvite-succeeds-navigate-to-the-success-publish-step-immediately-without-additional-round-trips",
+      "title": "Optimize the invite publishing flow to reduce the time taken when the user clicks Publish in the creator flow. Specifically: (1) In the backend main.mo, ensure finalizeImage chunk assembly is O(n) and does not perform redundant iterations. (2) In the frontend CreateInvitePage.tsx and StepPhotoUpload.tsx/StepGalleryMusic.tsx, parallelize independent chunked upload calls where possible (upload bride photo chunks and groom photo chunks concurrently rather than sequentially). (3) Show a meaningful per-step progress indicator during publishing so the user understands the app is working. (4) After createInvite/updateInvite succeeds, navigate to the success/publish step immediately without additional round-trips.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-optimize-the-invitation-page-load-time-at-invite-id-in-invitepage-tsx-ensure-the-invite-data-fetch-via-react-query-is-efficient-set-an-appropriate-staletime-at-least-60-seconds-so-repeat-visits-do-not-re-fetch-unnecessarily-lazy-load-the-template-component-already-lazy-per-codebase-and-ensure-the-loading-skeleton-is-shown-immediately-in-basetemplate-tsx-defer-rendering-of-heavy-sections-gallery-events-timeline-rsvp-form-until-they-are-near-the-viewport-using-intersectionobserver-or-react-lazy-with-suspense-so-the-hero-section-paints-first-avoid-blocking-the-initial-render-on-non-critical-assets-music-gallery-images",
+      "title": "Optimize the invitation page load time at /invite/:id. In InvitePage.tsx, ensure the invite data fetch via React Query is efficient: set an appropriate staleTime (at least 60 seconds) so repeat visits do not re-fetch unnecessarily. Lazy-load the template component (already lazy per codebase) and ensure the loading skeleton is shown immediately. In BaseTemplate.tsx, defer rendering of heavy sections (gallery, events timeline, RSVP form) until they are near the viewport using IntersectionObserver or React.lazy with Suspense, so the hero section paints first. Avoid blocking the initial render on non-critical assets (music, gallery images).",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-floatingphotoframe-tsx-and-basetemplate-tsx-remove-the-decorative-filigree-frame-overlay-svg-element-that-renders-on-top-of-or-in-the-middle-of-the-bride-and-groom-photos-replace-it-with-a-premium-css-border-boundary-styled-directly-on-the-photo-container-use-a-multi-layered-border-approach-e-g-a-thick-solid-or-double-gold-saffron-border-with-a-subtle-inset-shadow-and-an-outer-glow-that-frames-the-photo-from-the-outside-without-any-element-overlapping-the-photo-image-itself-the-photo-must-be-fully-visible-at-all-times-the-border-style-should-feel-premium-and-on-theme-gold-tones-rounded-or-slightly-ornate-corners-using-border-radius-or-a-clip-path-consistent-with-the-hindu-wedding-aesthetic-the-floating-3d-bobbing-animation-on-the-photo-container-should-be-retained",
+      "title": "In FloatingPhotoFrame.tsx and BaseTemplate.tsx, remove the decorative filigree frame/overlay SVG element that renders on top of or in the middle of the bride and groom photos. Replace it with a premium CSS border/boundary styled directly on the photo container — use a multi-layered border approach (e.g., a thick solid or double gold/saffron border with a subtle inset shadow and an outer glow) that frames the photo from the outside without any element overlapping the photo image itself. The photo must be fully visible at all times. The border style should feel premium and on-theme (gold tones, rounded or slightly ornate corners using border-radius or a clip-path, consistent with the Hindu wedding aesthetic). The floating 3D bobbing animation on the photo container should be retained.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-whatsapp-sharing-button-to-the-invitation-page-invitepage-tsx-or-sharesection-tsx-the-button-should-be-visible-on-the-published-invitation-page-at-invite-id-when-clicked-it-opens-a-whatsapp-share-link-in-a-new-tab-using-the-format-https-wa-me-text-encoded-message-where-the-message-includes-the-couple-names-wedding-date-and-the-full-shareable-invitation-url-style-the-button-to-match-the-app-s-premium-theme-gold-saffron-accent-cormorant-garamond-or-cinzel-typography-place-it-near-the-existing-share-qr-section-or-as-a-floating-button",
+      "title": "Add a WhatsApp sharing button to the invitation page (InvitePage.tsx or ShareSection.tsx). The button should be visible on the published invitation page at /invite/:id. When clicked, it opens a WhatsApp share link in a new tab using the format https://wa.me/?text=<encoded message> where the message includes the couple names, wedding date, and the full shareable invitation URL. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond or Cinzel typography). Place it near the existing share/QR section or as a floating button.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -258,6 +309,36 @@
       "reqIds": [
         "REQ-19"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Fix bride and groom photos hidden behind overlay frames — photos should be visible inside decorative frames, not obscured by them",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Music should autoplay on invitation page load (after first user interaction or immediately on open)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Fix slow publish and slow invitation page load times — optimize chunked upload speed and invite retrieval/rendering performance",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Replace decorative overlay frame on bride/groom photos with a premium border/boundary around the photo (no frame overlapping in the middle of the photo)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Add a WhatsApp sharing button on the invitation page so guests can share the invite link via WhatsApp",
+      "reqIds": [],
       "status": "pending"
     }
   ],

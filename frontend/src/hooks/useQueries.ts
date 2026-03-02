@@ -11,6 +11,7 @@ export function useListSampleInvites() {
       return actor.listSampleInvites();
     },
     enabled: !!actor && !isFetching,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -24,6 +25,8 @@ export function useGetInvite(id: string) {
       return result ?? null;
     },
     enabled: !!actor && !isFetching && !!id,
+    staleTime: 60 * 1000, // 60 seconds — repeat visits use cached data
+    gcTime: 5 * 60 * 1000, // keep in cache for 5 minutes
   });
 }
 

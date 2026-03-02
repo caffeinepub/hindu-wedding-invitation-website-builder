@@ -1,62 +1,64 @@
 {
   "kind": "build_request",
-  "title": "Fix HTTP 413 payload too large error on invite publish",
-  "projectName": "Hindu Wedding Invite Builder",
-  "priority": "high",
+  "title": "Replace photo frame overlay with premium border and add WhatsApp sharing button",
+  "projectName": "Hindu Wedding Invites",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-19",
-      "text": "Implement a chunked image storage strategy in the Motoko backend to work around the 2MB IC ingress message limit. Instead of accepting full Base64 image data inline in createInvite/updateInvite calls, add a dedicated uploadImageChunk(inviteId, fieldKey, chunkIndex, totalChunks, chunkData) endpoint that accepts image data in chunks (each chunk ≤ 1MB). Add a finalizeImage(inviteId, fieldKey) endpoint that assembles the chunks and stores the complete image against the invite record. The invite record's image fields (bridePhoto, groomPhoto, coverPhoto, galleryImages array entries) should store the assembled data internally after finalization. createInvite and updateInvite payloads must no longer carry raw image data — image fields in those payloads should accept only an empty/placeholder value or be omitted entirely.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "HTTP request failed: Status: 413",
-          "Request 0x169df3a2e892d669293bfc5e2c99950f322cca801fbf7d400b84e87ec5f350b2 is too large. Message byte size 2794141 is larger than the max allowed 2097152."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes an uploadImageChunk endpoint that accepts inviteId, fieldKey (bridePhoto | groomPhoto | coverPhoto | galleryImage:{index}), chunkIndex, totalChunks, and a Blob/Text chunk payload.",
-        "Backend exposes a finalizeImage endpoint that reassembles chunks for a given inviteId + fieldKey and stores the result in the invite record.",
-        "createInvite and updateInvite no longer accept raw Base64 image payloads; calling them with large image data no longer triggers a 413.",
-        "After finalization, getInvite returns the assembled image data correctly for each field.",
-        "Chunk reassembly handles out-of-order delivery by using chunkIndex ordering."
-      ]
-    },
-    {
-      "id": "REQ-20",
-      "text": "Update the frontend photo upload flow to use the new chunked upload endpoints instead of embedding Base64 data inline in the publish payload. In StepPhotoUpload.tsx and StepGalleryMusic.tsx, after a user selects an image file, split the Base64 data URL into chunks of at most 1MB each and call uploadImageChunk sequentially for each chunk, then call finalizeImage to commit the image. Store only a reference token or the fieldKey (not the full Base64 string) in the creator form state. When the CreateInvitePage assembles the final InvitePayload for createInvite/updateInvite, omit raw image data — images are already stored via the chunked upload flow. Show per-image upload progress during chunked upload.",
+      "id": "REQ-25",
+      "text": "In FloatingPhotoFrame.tsx and BaseTemplate.tsx, remove the decorative filigree frame/overlay SVG element that renders on top of or in the middle of the bride and groom photos. Replace it with a premium CSS border/boundary styled directly on the photo container — use a multi-layered border approach (e.g., a thick solid or double gold/saffron border with a subtle inset shadow and an outer glow) that frames the photo from the outside without any element overlapping the photo image itself. The photo must be fully visible at all times. The border style should feel premium and on-theme (gold tones, rounded or slightly ornate corners using border-radius or a clip-path, consistent with the Hindu wedding aesthetic). The floating 3D bobbing animation on the photo container should be retained.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Message byte size 2794141 is larger than the max allowed 2097152."
+          "REMOVE THE FRAME FROM BRIDE AND GROOM IT SHOWS IN MIDDLE OR OVERLAP ON PHOTO INSTEAD ADD A BORDER OR BOUNDARY AROUND PHOTO WHICH MAKES IT PREMIUM"
         ]
       },
       "acceptanceCriteria": [
-        "Selecting and uploading a bride, groom, or cover photo triggers chunked upload calls to the backend and finalizes the image before the user proceeds.",
-        "Gallery image uploads also use chunked upload, with per-image progress indication.",
-        "The publish payload sent via createInvite/updateInvite no longer contains raw Base64 image strings.",
-        "Publishing an invite with multiple photos no longer returns an HTTP 413 error.",
-        "Published /invite/:id pages still display all uploaded photos correctly after the chunked upload approach.",
-        "Upload progress UI is shown per image during chunk transmission."
+        "No SVG filigree or overlay element renders on top of or across the bride/groom photo area.",
+        "The photo is fully visible without any element covering any portion of the image.",
+        "A premium-looking border/boundary is visible around the outside edge of each photo container.",
+        "The border uses gold/saffron tones consistent with the app's Hindu wedding theme.",
+        "The border styling looks premium across all 8 templates in both light and dark variants.",
+        "The floating 3D bobbing animation on the photo frame container is still present and functional.",
+        "The reduce-motion toggle still disables the bobbing animation when enabled."
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "text": "Add a WhatsApp sharing button to the invitation page (InvitePage.tsx or ShareSection.tsx). The button should be visible on the published invitation page at /invite/:id. When clicked, it opens a WhatsApp share link in a new tab using the format https://wa.me/?text=<encoded message> where the message includes the couple names, wedding date, and the full shareable invitation URL. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond or Cinzel typography). Place it near the existing share/QR section or as a floating button.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "IT NEED AN WHATSAPP SHARING BUTTON ALSO"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A WhatsApp sharing button is visible on every published invitation page at /invite/:id.",
+        "Clicking the button opens a new browser tab with a wa.me share URL.",
+        "The WhatsApp share message includes the couple names, wedding date, and the full invitation URL.",
+        "The button is styled consistently with the app's premium Hindu wedding theme (gold accents, matching typography).",
+        "The button is responsive and visible on both mobile and desktop viewports.",
+        "The WhatsApp icon or label clearly identifies the button as a WhatsApp share action."
       ]
     }
   ],
   "constraints": [
-    "Each individual message to the IC canister must remain strictly under 2MB (2,097,152 bytes).",
-    "Do not change immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "All Motoko logic must remain in the single main actor (backend/main.mo)."
+    "Do not modify any files under frontend/src/hooks/ (immutable paths).",
+    "Do not modify files under frontend/src/components/ui (immutable paths).",
+    "The floating 3D bobbing animation on photo frames must be preserved; only the overlapping frame overlay element is to be removed.",
+    "WhatsApp sharing must use the standard wa.me URL scheme — no third-party SDKs or APIs."
   ],
   "nonGoals": [
-    "Compressing or resizing uploaded images on the client side.",
-    "Storing images in any external storage service.",
-    "Changing the visual design or template styling.",
-    "Modifying the RSVP form or events timeline."
+    "Adding any other social sharing platforms beyond WhatsApp.",
+    "Changing the backend schema or adding new backend endpoints.",
+    "Modifying the overall layout or structure of the invitation templates beyond the photo frame and share section changes.",
+    "Changing how photos are uploaded or stored."
   ],
   "imageRequirements": {
     "required": [],

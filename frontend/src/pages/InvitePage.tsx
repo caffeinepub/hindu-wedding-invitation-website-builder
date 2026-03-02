@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useGetInvite } from '../hooks/useQueries';
 import InviteMetaTags from '../components/invitation/InviteMetaTags';
@@ -29,12 +29,14 @@ function InviteLoadingSkeleton() {
           <Skeleton key={i} className="w-16 h-16 bg-white/10 rounded-xl" />
         ))}
       </div>
+      <p className="text-ivory/30 font-garamond text-sm mt-2 animate-pulse">Loading your invitation…</p>
     </div>
   );
 }
 
 export default function InvitePage() {
   const { id } = useParams({ from: '/invite/$id' });
+  // isLoading is true only on the very first fetch; subsequent visits use cached data (staleTime=60s)
   const { data: invite, isLoading, error } = useGetInvite(id);
 
   if (isLoading) {

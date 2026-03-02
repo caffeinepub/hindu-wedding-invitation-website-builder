@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import CountdownTimer from '../invitation/CountdownTimer';
 import EventsTimeline from '../invitation/EventsTimeline';
 import RSVPForm from '../invitation/RSVPForm';
@@ -6,6 +6,7 @@ import BackgroundMusic from '../invitation/BackgroundMusic';
 import FloatingPhotoFrame from '../effects/FloatingPhotoFrame';
 import DriftingPetals from '../effects/DriftingPetals';
 import MouseTiltHero from '../effects/MouseTiltHero';
+import ShareSection from '../invitation/ShareSection';
 import type { InviteRecord, ExternalBlob } from '../../backend';
 
 export interface TemplateProps {
@@ -27,7 +28,6 @@ interface BaseTemplateProps extends TemplateProps {
 function getBlobUrl(blob: ExternalBlob | string | null | undefined, fallback: string): string {
   if (!blob) return fallback;
   if (typeof blob === 'string') {
-    // Legacy string URL
     return blob || fallback;
   }
   try {
@@ -49,6 +49,34 @@ function isValidGalleryBlob(blob: ExternalBlob | string | null | undefined): boo
   } catch {
     return false;
   }
+}
+
+// Deferred section: only renders when near the viewport
+function DeferredSection({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={className}>
+      {visible ? children : <div style={{ minHeight: '200px' }} />}
+    </div>
+  );
 }
 
 export default function BaseTemplate({
@@ -99,6 +127,11 @@ export default function BaseTemplate({
 
   const galleryImages = (invite.galleryImages || []).filter(isValidGalleryBlob);
 
+  // Build the invitation URL for sharing
+  const inviteUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/invite/${invite.id}`
+    : `/invite/${invite.id}`;
+
   return (
     <div className={`min-h-screen w-full ${textClass}`} style={bodyStyle}>
       {petalColors && <DriftingPetals colors={petalColors} />}
@@ -106,7 +139,7 @@ export default function BaseTemplate({
         <BackgroundMusic musicUrl={musicSrc} accentColor={accentColor} />
       )}
 
-      {/* Hero */}
+      {/* Hero — renders immediately, no deferral */}
       <MouseTiltHero className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" style={heroStyle}>
         {/* Mandala divider top */}
         <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10"
@@ -137,7 +170,7 @@ export default function BaseTemplate({
           style={{ backgroundImage: 'url(/assets/generated/mandala-divider.dim_1200x120.png)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.4, transform: 'scaleY(-1)' }} />
       </MouseTiltHero>
 
-      {/* Couple Photos */}
+      {/* Couple Photos — renders immediately as it's above the fold */}
       <section className="py-20 px-6" style={sectionStyle}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -150,6 +183,7 @@ export default function BaseTemplate({
                 src={bridePhoto}
                 alt="Bride"
                 className="w-48 h-64 md:w-56 md:h-72 mx-auto mb-4"
+                accentColor={accentColor}
               />
               <p className="text-xl font-cormorant font-semibold" style={{ color: accentColor }}>
                 {invite.coupleNames?.split(' & ')[0] || 'Bride'}
@@ -161,6 +195,7 @@ export default function BaseTemplate({
                 src={groomPhoto}
                 alt="Groom"
                 className="w-48 h-64 md:w-56 md:h-72 mx-auto mb-4"
+                accentColor={accentColor}
               />
               <p className="text-xl font-cormorant font-semibold" style={{ color: accentColor }}>
                 {invite.coupleNames?.split(' & ')[1] || 'Groom'}
@@ -172,54 +207,84 @@ export default function BaseTemplate({
 
       {children}
 
-      {/* Events */}
+      {/* Events — deferred until near viewport */}
       {invite.events && invite.events.length > 0 && (
-        <section className="py-20 px-6" style={sectionStyle}>
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>Wedding Events</h2>
-              <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+        <DeferredSection>
+          <section className="py-20 px-6" style={sectionStyle}>
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>Wedding Events</h2>
+                <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+              </div>
+              <EventsTimeline events={invite.events} accentColor={accentColor} dark={isDark} />
             </div>
-            <EventsTimeline events={invite.events} accentColor={accentColor} dark={isDark} />
-          </div>
-        </section>
+          </section>
+        </DeferredSection>
       )}
 
-      {/* Gallery */}
+      {/* Gallery — deferred until near viewport */}
       {galleryImages.length > 0 && (
-        <section className="py-20 px-6" style={sectionStyle}>
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>Gallery</h2>
-              <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+        <DeferredSection>
+          <section className="py-20 px-6" style={sectionStyle}>
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>Gallery</h2>
+                <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {galleryImages.map((blobOrUrl, i) => {
+                  const imgUrl = typeof blobOrUrl === 'string'
+                    ? blobOrUrl
+                    : blobOrUrl.getDirectURL();
+                  return (
+                    <div key={i} className="aspect-square overflow-hidden rounded-xl">
+                      <img
+                        src={imgUrl}
+                        alt={`Gallery ${i + 1}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {galleryImages.map((blobOrUrl, i) => {
-                const imgUrl = typeof blobOrUrl === 'string'
-                  ? blobOrUrl
-                  : blobOrUrl.getDirectURL();
-                return (
-                  <div key={i} className="aspect-square overflow-hidden rounded-xl">
-                    <img src={imgUrl} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+          </section>
+        </DeferredSection>
       )}
 
-      {/* RSVP */}
-      <section className="py-20 px-6" style={sectionStyle}>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>RSVP</h2>
-            <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
-            <p className="mt-4 font-garamond opacity-70">Kindly respond by the wedding date</p>
+      {/* RSVP — deferred until near viewport */}
+      <DeferredSection>
+        <section className="py-20 px-6" style={sectionStyle}>
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>RSVP</h2>
+              <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+              <p className="mt-4 font-garamond opacity-70">Kindly respond by the wedding date</p>
+            </div>
+            <RSVPForm inviteId={invite.id} thankYouText={thankYouText} accentColor={accentColor} dark={isDark} />
           </div>
-          <RSVPForm inviteId={invite.id} thankYouText={thankYouText} accentColor={accentColor} dark={isDark} />
-        </div>
-      </section>
+        </section>
+      </DeferredSection>
+
+      {/* Share Section — deferred until near viewport */}
+      <DeferredSection>
+        <section className="py-16 px-6" style={sectionStyle}>
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-cormorant font-bold" style={{ color: accentColor }}>Share the Joy</h2>
+              <div className="w-24 h-px mx-auto mt-3" style={{ background: accentColor }} />
+              <p className="mt-4 font-garamond opacity-70 text-sm">Spread the love — share this invitation</p>
+            </div>
+            <ShareSection
+              url={inviteUrl}
+              accentColor={accentColor}
+              coupleNames={invite.coupleNames}
+              weddingDate={invite.weddingDate}
+            />
+          </div>
+        </section>
+      </DeferredSection>
 
       {/* Footer */}
       <footer className="py-8 text-center border-t" style={{ borderColor: accentColor + '33' }}>

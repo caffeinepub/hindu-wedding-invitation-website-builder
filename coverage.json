@@ -1,58 +1,49 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T04:04:45.187Z",
+  "generatedAt": "2026-03-02T06:04:00.773Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 2,
-    "implemented": 1,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-19",
-        "summary": "Implement a chunked image storage strategy in the Motoko backend to work around the 2MB IC ingress message limit. Instead of accepting full Base64 image data inline in createInvite/updateInvite calls, add a dedicated uploadImageChunk(inviteId, fieldKey, chunkIndex, totalChunks, chunkData) endpoint that accepts image data in chunks (each chunk ≤ 1MB). Add a finalizeImage(inviteId, fieldKey) endpoint that assembles the chunks and stores the complete image against the invite record. The invite record's image fields (bridePhoto, groomPhoto, coverPhoto, galleryImages array entries) should store the assembled data internally after finalization. createInvite and updateInvite payloads must no longer carry raw image data — image fields in those payloads should accept only an empty/placeholder value or be omitted entirely.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-20",
-        "summary": "Update the frontend photo upload flow to use the new chunked upload endpoints instead of embedding Base64 data inline in the publish payload. In StepPhotoUpload.tsx and StepGalleryMusic.tsx, after a user selects an image file, split the Base64 data URL into chunks of at most 1MB each and call uploadImageChunk sequentially for each chunk, then call finalizeImage to commit the image. Store only a reference token or the fieldKey (not the full Base64 string) in the creator form state. When the CreateInvitePage assembles the final InvitePayload for createInvite/updateInvite, omit raw image data — images are already stored via the chunked upload flow. Show per-image upload progress during chunked upload.",
+        "id": "REQ-25",
+        "summary": "In FloatingPhotoFrame.tsx and BaseTemplate.tsx, remove the decorative filigree frame/overlay SVG element that renders on top of or in the middle of the bride and groom photos. Replace it with a premium CSS border/boundary styled directly on the photo container — use a multi-layered border approach (e.g., a thick solid or double gold/saffron border with a subtle inset shadow and an outer glow) that frames the photo from the outside without any element overlapping the photo image itself. The photo must be fully visible at all times. The border style should feel premium and on-theme (gold tones, rounded or slightly ornate corners using border-radius or a clip-path, consistent with the Hindu wedding aesthetic). The floating 3D bobbing animation on the photo container should be retained.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/creator/StepPhotoUpload.tsx",
-          "frontend/src/components/creator/StepGalleryMusic.tsx",
-          "frontend/src/pages/CreateInvitePage.tsx",
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/effects/FloatingPhotoFrame.tsx",
+          "frontend/src/components/templates/BaseTemplate.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/creator/StepPhotoUpload.tsx",
-          "frontend/src/components/creator/StepGalleryMusic.tsx",
-          "frontend/src/pages/CreateInvitePage.tsx",
-          "frontend/src/backend.d.ts"
+          "frontend/src/components/effects/FloatingPhotoFrame.tsx",
+          "frontend/src/components/templates/BaseTemplate.tsx"
+        ]
+      },
+      {
+        "id": "REQ-26",
+        "summary": "Add a WhatsApp sharing button to the invitation page (InvitePage.tsx or ShareSection.tsx). The button should be visible on the published invitation page at /invite/:id. When clicked, it opens a WhatsApp share link in a new tab using the format https://wa.me/?text=<encoded message> where the message includes the couple names, wedding date, and the full shareable invitation URL. Style the button to match the app's premium theme (gold/saffron accent, Cormorant Garamond or Cinzel typography). Place it near the existing share/QR section or as a floating button.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/invitation/ShareSection.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/invitation/ShareSection.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/creator/StepGalleryMusic.tsx",
-    "frontend/src/components/creator/StepPhotoUpload.tsx",
-    "frontend/src/components/invitation/InviteMetaTags.tsx",
+    "frontend/src/components/effects/FloatingPhotoFrame.tsx",
+    "frontend/src/components/invitation/ShareSection.tsx",
     "frontend/src/components/templates/BaseTemplate.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/pages/CreateInvitePage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

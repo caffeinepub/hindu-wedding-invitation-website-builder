@@ -1,22 +1,39 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Copy, Check, Share2 } from 'lucide-react';
+import { SiWhatsapp } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 
 interface ShareSectionProps {
   url: string;
   accentColor?: string;
+  coupleNames?: string;
+  weddingDate?: string;
 }
 
-// Minimal QR code generator using canvas — no external library needed
 function generateQRDataURL(text: string, size: number): string {
-  // We use a simple approach: encode the URL as a QR via a data URI approach
-  // Since we can't use qrcode.react, we'll render a placeholder QR-like grid
-  // and use the URL encoded in a visual pattern. For a real QR, we use the
-  // Google Charts API as a fallback (no API key needed, free endpoint).
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&bgcolor=ffffff&color=1a0a00&margin=10`;
 }
 
-export default function ShareSection({ url, accentColor = '#D4AF37' }: ShareSectionProps) {
+function formatWeddingDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+export default function ShareSection({
+  url,
+  accentColor = '#D4AF37',
+  coupleNames,
+  weddingDate,
+}: ShareSectionProps) {
   const [copied, setCopied] = useState(false);
   const qrUrl = generateQRDataURL(url, 180);
 
@@ -39,8 +56,21 @@ export default function ShareSection({ url, accentColor = '#D4AF37' }: ShareSect
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const formattedDate = formatWeddingDate(weddingDate);
+    const names = coupleNames || 'The Couple';
+    let message = `🌸 You're invited to the wedding of *${names}*!`;
+    if (formattedDate) {
+      message += `\n📅 ${formattedDate}`;
+    }
+    message += `\n\n✨ View the invitation:\n${url}`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="flex flex-col items-center gap-6">
+      {/* QR Code */}
       <div
         className="p-4 rounded-2xl"
         style={{ background: '#fff', border: `3px solid ${accentColor}` }}
@@ -55,6 +85,7 @@ export default function ShareSection({ url, accentColor = '#D4AF37' }: ShareSect
         />
       </div>
 
+      {/* URL Copy Row */}
       <div className="w-full max-w-md">
         <div
           className="flex items-center gap-2 rounded-xl p-3"
@@ -76,6 +107,24 @@ export default function ShareSection({ url, accentColor = '#D4AF37' }: ShareSect
             <span className="ml-1">{copied ? 'Copied!' : 'Copy'}</span>
           </Button>
         </div>
+      </div>
+
+      {/* WhatsApp Share Button */}
+      <div className="w-full max-w-md">
+        <button
+          onClick={handleWhatsAppShare}
+          className="w-full flex items-center justify-center gap-3 rounded-xl py-3 px-5 font-cormorant font-semibold text-base transition-all duration-200 hover:opacity-90 active:scale-95"
+          style={{
+            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+            color: '#ffffff',
+            boxShadow: '0 4px 16px 0 #25D36644',
+            border: '1px solid #25D36688',
+            letterSpacing: '0.04em',
+          }}
+        >
+          <SiWhatsapp size={20} />
+          <span>Share on WhatsApp</span>
+        </button>
       </div>
     </div>
   );
